@@ -34,3 +34,5 @@ for iid=1:length(controlData)
     perturbKin{iid} = snipKinematics(perturbSnips{iid}, perturbData{iid});
     perturbKinMean{iid} = structfun(@(X) meanByTarget(perturbSnips{iid}, X), perturbKin{iid}, 'UniformOutput', false);
 end
+
+[controlPd, perturbPd] = extractionModulePD('B:/Data/Arthur/%s/Arthur.BC.%0.5d.CenterOut.mat', 'mm-dd-yy', dates, control, perturb);

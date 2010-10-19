@@ -1,7 +1,7 @@
-% [controlEmpiricalPd, controlEmpiricalPdCov] = computeEmpiricalPD(controlSnips, controlRate);
-% [perturbEmpiricalPd, perturbEmpiricalPdCov] = computeEmpiricalPD(perturbSnips, perturbRate);
-% controller = rateController(controlPd, controlRate, controlKin);
-% 
+controlEmpiricalPd = reaimedPd(controlRateMean);
+perturbEmpiricalPd = reaimedPd(perturbRateMean);
+controller = rateController(controlPd, controlRate, controlKin);
+
 [controlTh, perturbTh, decoderChange, globalChange, meanChange] = pdChange(controlPd, perturbPd, controlEmpiricalPd, perturbEmpiricalPd);
 
 decoderChangeMat = cell2mat(cellfun(@(x) cell2mat(struct2cell(x)), decoderChange, 'UniformOutput', false));
