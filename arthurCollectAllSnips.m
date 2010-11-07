@@ -15,24 +15,30 @@ perturbKin = cell(size(controlData));
 perturbKinMean = cell(size(controlData));
 for iid=1:length(controlData)
     controlSnips{iid} = snipPeak(controlData{iid});
-    controlRate{iid} = snipRate(controlSnips{iid},controlData{iid});
-    controlRateMean{iid} = structfun(@(X) meanByTarget(controlSnips{iid}, X), controlRate{iid}, 'UniformOutput', false);
-    perturbSnips{iid} = snipPeak(perturbData{iid});
-    perturbRate{iid} = snipRate(perturbSnips{iid},perturbData{iid});
-    perturbRateMean{iid} = structfun(@(X) meanByTarget(perturbSnips{iid}, X), perturbRate{iid}, 'UniformOutput', false);
-    fields = fieldnames(controlRateMean{iid});
-    for iif=1:length(fields)
-        if(~isfield(controlRateMean{iid},fields{iif}))
-            controlRateMean{iid}.(fields{iif}) = zeros(size(perturbRateMean{iid}.(fields{iif})));
-        end
-        if(~isfield(perturbRateMean{iid},fields{iif}))
-            perturbRateMean{iid}.(fields{iif}) = zeros(size(controlRateMean{iid}.(fields{iif})));
-        end
-    end
+    controlRate{iid} = snipStabilizedSmoothedRate(controlSnips{iid},controlData{iid});
     controlKin{iid} = snipKinematics(controlSnips{iid}, controlData{iid});
     controlKinMean{iid} = structfun(@(X) meanByTarget(controlSnips{iid}, X), controlKin{iid}, 'UniformOutput', false);
+    
+    perturbSnips{iid} = snipPeak(perturbData{iid});
     perturbKin{iid} = snipKinematics(perturbSnips{iid}, perturbData{iid});
+    perturbRate{iid} = snipStabilizedSmoothedRate(perturbSnips{iid},perturbData{iid});
     perturbKinMean{iid} = structfun(@(X) meanByTarget(perturbSnips{iid}, X), perturbKin{iid}, 'UniformOutput', false);
+    
+    controlRateMean{iid} = structfun(@(X) meanByTarget(controlSnips{iid}, X), controlRate{iid}, 'UniformOutput', false);
+    perturbRateMean{iid} = structfun(@(X) meanByTarget(perturbSnips{iid}, X), perturbRate{iid}, 'UniformOutput', false);
 end
+[controlRate, perturbRate] = synchFields(controlRate, perturbRate);
+[controlRateMean, perturbRateMean] = synchFields(controlRateMean, perturbRateMean);
 
 [controlPd, perturbPd] = extractionModulePD('B:/Data/Arthur/%s/Arthur.BC.%0.5d.CenterOut.mat', 'mm-dd-yy', dates, control, perturb);
+[controlPd, perturbPd] = synchFields(controlPd, perturbPd);
+
+err = nan(length(controlRateMean),1);
+for day=1:length(err)
+    cursor = cart2pol(controlKin{day}.velX(:,15), controlKin{day}.velY(:,15));
+    target = cart2pol(controlSnips{day}.targetPos(:,1), controlSnips{day}.targetPos(:,2));
+    err(day) = mean(abs(wrapToPi(cursor-target)));
+end
+    
+
+load b:\data\arthur\survival.mat survival;

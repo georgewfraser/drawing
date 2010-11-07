@@ -1,13 +1,22 @@
-function Xmean = meanByTarget3D(snips, X)
-outward = sum(abs(snips.startPos),2)==0;
-inward = ~outward;
-targets = snips.targetPos-snips.startPos;
-% We are going to construct a mean such that each outward movement is
-% matched up with an inward movement
-Xmean = [meanSub(X(outward,:),targets(outward,:)) meanSub(X(inward,:),-targets(inward,:))];
+function varMean = meanByTarget3D(snips, var)
+varMean = cell(size(var));
+for day=1:length(snips)
+    varMean{day} = struct();
+    fields = fieldnames(var{day});
+    for f=1:length(fields)
+        X = var{day}.(fields{f});
+        outward = sum(abs(snips{day}.startPos),2)==0;
+        inward = ~outward;
+        targets = snips{day}.targetPos-snips{day}.startPos;
+        % We are going to construct a mean such that each outward movement is
+        % matched up with an inward movement
+        Xmean = [meanSub(X(outward,:),targets(outward,:)); meanSub(X(inward,:),targets(inward,:))];
+        varMean{day}.(fields{f}) = Xmean;
+    end
+end
 end
 function Xmean = meanSub(X,targets)
-utargets = generateTargets(norm(targets(1,:)));
+utargets = target26(norm(targets(1,:)));
 targets = round(targets*1000)/1000;
 utargets = round(utargets*1000)/1000;
 % for i=1:size(utargets,1),
@@ -21,30 +30,11 @@ utargets = round(utargets*1000)/1000;
 % ylim([-.1 .1]);
 % zlim([-.1 .1]);
 
-[tf,set1] = ismember(targets, utargets(1:8,:), 'rows');
-[tf,set2] = ismember(targets, utargets(9:16,:), 'rows');
-[tf,set3] = ismember(targets, utargets(17:24,:), 'rows');
-[tf,set4] = ismember(targets, utargets(25:32,:), 'rows');
+[tf,loc] = ismember(targets, utargets, 'rows');
 
 Xmean = nan(length(utargets),size(X,2));
 
-for iit=1:8
-    Xmean(iit,:) = nanmean(X(iit==set1,:));
-    Xmean(8+iit,:) = nanmean(X(iit==set2,:));
-    Xmean(16+iit,:) = nanmean(X(iit==set3,:));
-    Xmean(24+iit,:) = nanmean(X(iit==set4,:));
-end
-end
-
-function targets = generateTargets(r)
-targets = nan(32,3);
-for az=[0 2]
-    [x,y,z] = sph2cart(az*pi/4,(0:7)'*pi/4,r);
-    targets(az*8+(1:8),:) = [x y z];
-end
-for az=[1 3]
-    adjust = [0 -0.2163 0 0.2163 0 -0.2163 0 0.2163];
-    [x,y,z] = sph2cart(az*pi/4,((0:7)+adjust)'*pi/4,r);
-    targets(az*8+(1:8),:) = [x y z];
+for iit=1:26
+    Xmean(iit,:) = nanmean(X(iit==loc,:));
 end
 end

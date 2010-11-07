@@ -1,0 +1,32 @@
+function [controlD, perturbD, control1, perturb1, control2, perturb2, meanChange1] = deltaPdComparison(controlD, perturbD, control1, perturb1, control2, perturb2)
+meanChange1 = cell(size(control1));
+for day=1:length(control1)
+    fields = fieldnames(controlD{day});
+    fields = intersect(fields,fieldnames(control1{day}));
+    fields = intersect(fields,fieldnames(control2{day}));
+    fields = intersect(fields,fieldnames(perturbD{day}));
+    fields = intersect(fields,fieldnames(perturb1{day}));
+    fields = intersect(fields,fieldnames(perturb2{day}));
+    controlD{day} = orderfields(rmfield(controlD{day},setdiff(fieldnames(controlD{day}),fields)));
+    control1{day} = orderfields(rmfield(control1{day},setdiff(fieldnames(control1{day}),fields)));
+    control2{day} = orderfields(rmfield(control2{day},setdiff(fieldnames(control2{day}),fields)));
+    perturbD{day} = orderfields(rmfield(perturbD{day},setdiff(fieldnames(perturbD{day}),fields)));
+    perturb1{day} = orderfields(rmfield(perturb1{day},setdiff(fieldnames(perturb1{day}),fields)));
+    perturb2{day} = orderfields(rmfield(perturb2{day},setdiff(fieldnames(perturb2{day}),fields)));
+    controlD{day} = structfun(@(x) cart2pol(x(1),x(2)), controlD{day});
+    control1{day} = structfun(@(x) cart2pol(x(1),x(2)), control1{day});
+    control2{day} = structfun(@(x) cart2pol(x(1),x(2)), control2{day});
+    perturbD{day} = structfun(@(x) cart2pol(x(1),x(2)), perturbD{day});
+    perturb1{day} = structfun(@(x) cart2pol(x(1),x(2)), perturb1{day});
+    perturb2{day} = structfun(@(x) cart2pol(x(1),x(2)), perturb2{day});
+    mc = mean(wrapToPi(perturb1{day}-control1{day}));
+    meanChange1{day} = repmat(mc,size(control1{day}));
+end
+controlD = cell2mat(controlD);
+perturbD = cell2mat(perturbD);
+control1 = cell2mat(control1);
+perturb1 = cell2mat(perturb1);
+control2 = cell2mat(control2);
+perturb2 = cell2mat(perturb2);
+meanChange1 = cell2mat(meanChange1);
+

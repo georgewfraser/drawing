@@ -21,6 +21,8 @@ for day=1:length(rateMean)
         P_early = V_early \ R_early;
         % Estimate the target directions
         V_early = R_early / P_early;
+        % Constrain V to unit vectors
+        V_early = bsxfun(@rdivide,V_early,sqrt(sum(V_early.^2,2)));
         
         residuals = R_early - V_early*P_early;
         oldSSE = newSSE;
@@ -28,7 +30,7 @@ for day=1:length(rateMean)
         iterations = iterations+1;
 %         fprintf('SSE = %f\n',newSSE);
     end
-    fprintf('Converged in %d iterations\n',iterations);
+%     fprintf('Converged in %d iterations\n',iterations);
     
     V_late = [x y];
     % Dependent variables, firing rateMean means by target
@@ -44,6 +46,8 @@ for day=1:length(rateMean)
         P_late = V_late \ R_late;
         % Estimate the target directions
         V_late = R_late / P_late;
+        % Constrain V to unit vectors
+        V_late = bsxfun(@rdivide,V_late,sqrt(sum(V_late.^2,2)));
         
         residuals = R_late - V_late*P_late;
         oldSSE = newSSE;
@@ -51,20 +55,20 @@ for day=1:length(rateMean)
         iterations = iterations+1;
 %         fprintf('SSE = %f\n',newSSE);
     end
-    fprintf('Converged in %d iterations\n',iterations);
+%     fprintf('Converged in %d iterations\n',iterations);
     
     fields = fieldnames(rateMean{day});
     for unit=1:length(fields)
         coeff{day}.(fields{unit}) = [P_early(:,unit)' P_late(:,unit)'];
     end
     
-    subplot(7,7,day);
-    hold on;
-    thEarly = cart2pol(V_early(:,1), V_early(:,2));
-    thEarly = th+wrapToPi(thEarly-th);
-    plot(th, thEarly, 'go');
-    thLate = cart2pol(V_late(:,1), V_late(:,2));
-    thLate = th+wrapToPi(thLate-th);
-    plot(th, thLate, 'rx');
-    line([-pi pi],[-pi pi]);
+%     subplot(7,7,day);
+%     hold on;
+%     thEarly = cart2pol(V_early(:,1), V_early(:,2));
+%     thEarly = th+wrapToPi(thEarly-th);
+%     plot(th, thEarly, 'go');
+%     thLate = cart2pol(V_late(:,1), V_late(:,2));
+%     thLate = th+wrapToPi(thLate-th);
+%     plot(th, thLate, 'rx');
+%     line([-pi pi],[-pi pi]);
 end

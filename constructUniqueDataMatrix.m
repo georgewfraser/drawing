@@ -1,4 +1,19 @@
 function [Y, alive, nBinsPerDay, colNames] = constructUniqueDataMatrix(rate, survival)
+for day=1:length(rate)-1
+    for unit=find(sum(survival{day},2)>0)'
+        name = sprintf('Unit%0.2d_%d',ceil(unit/4),mod(unit-1,4)+1);
+        if(~isfield(rate{day},name))
+            survival{day}(unit,:) = 0;
+        end
+    end
+    for unit=find(sum(survival{day},1)>0)
+        name = sprintf('Unit%0.2d_%d',ceil(unit/4),mod(unit-1,4)+1);
+        if(~isfield(rate{day+1},name))
+            survival{day}(:,unit) = 0;
+        end
+    end
+end
+        
 % Units that are alive today
 current = zeros(1,800);
 current(sum(survival{1},2)>0) = 1:sum(sum(survival{1},2)>0);

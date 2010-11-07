@@ -10,7 +10,7 @@ for day=1:length(coutSnips)
     for unit=1:min(stopAtUnit,length(fields))
         % Extract per-target firing rates
         R = coutRate{day}.(fields{unit});
-        R = mean(R(:,9:12),2);
+        R = mean(R(:,10:13),2);
         % Compute preferred directions
         % T*P = R
         prefDirs{day,unit} = (T \ R)'; %#ok<AGROW>
@@ -27,7 +27,7 @@ if(commonPD)
 end
 
 covariates = drawingCovariates(drawingKin, drawingSnips);
-lagValue = -.750:.010:.750;
+lagValues = -.750:.010:.750;
 direction = cell(size(drawingSnips));
 illusion = cell(size(drawingSnips));
 for day=1:length(coutSnips)
@@ -60,35 +60,31 @@ for day=1:length(coutSnips)
     Dv = covariates{day}.velocityDisparity';
     Dp = covariates{day}.positionDisparity';
     
-    % Calculate a predicted firing rate for the drawing task
-    Vrate = nan(sum(cycleMask(:)),100);
-    Virate = nan(sum(cycleMask(:)),100);
-    for th=1:100
-        [x,y] = pol2cart(th*2*pi/100,1);
-        P = [x y 0];
-        current = (P(1)*Vx+P(2)*Vy+P(3)*Vz)';
-        Vrate(:,th) = current(cycleMask);
-        current = (P(1).*Vx.*ill+P(2).*Vy.*ill+P(3).*Vz.*ill)';
-        Virate(:,th) = current(cycleMask);
-    end
-    
     fields = fieldnames(drawingRate{day});
     for unit=1:min(stopAtUnit,length(fields))
         fprintf('.');
-%         P = prefDirs{day,unit};
+        P = prefDirs{day,unit};
         
+        % Calculate a predicted firing rate for the drawing task
+        Vrate = (P(1)*Vx+P(2)*Vy+P(3)*Vz)';
+        Virate = (P(1).*Vx.*ill+P(2).*Vy.*ill+P(3).*Vz.*ill)';
+        Vrate = Vrate(cycleMask);
+        Virate = Virate(cycleMask);
         
         % Extract the actual firing rate
         R = drawingRate{day}.(fields{unit})';
         
         time = drawingSnips{day}.time';
-        direction{day}.(fields{unit}) = nan(length(lagValue),100);
-        illusion{day}.(fields{unit}) = nan(length(lagValue),100);
-        for lagIndex=1:length(lagValue)
-            Rlag = interpolateColumnwise(time,R,time-lagValue(lagIndex));
+        direction{day}.(fields{unit}) = nan(size(lagValues));
+        illusion{day}.(fields{unit}) = nan(size(lagValues));
+%         if(unit==6)
+%             keyboard;
+%         end
+        for lagIndex=1:length(lagValues)
+            Rlag = interpolateColumnwise(time,R,time-lagValues(lagIndex));
             Rlag = Rlag(cycleMask);
-            direction{day}.(fields{unit})(lagIndex,:) = corr(Rlag,Vrate);
-            illusion{day}.(fields{unit})(lagIndex,:) = corr(Rlag,Virate);
+            direction{day}.(fields{unit})(lagIndex) = corr(Rlag,Vrate);
+            illusion{day}.(fields{unit})(lagIndex) = corr(Rlag,Virate);
         end
     end
     fprintf('\n');

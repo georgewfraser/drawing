@@ -1,15 +1,17 @@
-function pd = empiricalPd(rateMean)
-pd = cell(size(rateMean));
-th = -pi+pi/8:pi/8:pi;
-[x,y] = pol2cart(th',1);
+function pd = empiricalPd(snips, rate)
+pd = cell(size(rate));
 for day=1:length(pd)
     pd{day} = struct();
-    fields = fieldnames(rateMean{day});
-    for iif=1:length(fields)
-        firing = mean(rateMean{day}.(fields{iif})(:,6:15),2);
+    V = snips{day}.targetPos-snips{day}.startPos;
+    V = V(:,1:2);
+    fields = fieldnames(rate{day});
+    for unit=1:length(fields)
+        firing = mean(rate{day}.(fields{unit})(:,6:15),2);
         firing = firing-mean(firing);
-        b = regress(firing,[x y]);
-        pd{day}.(fields{iif}) = b;
+        [b,dev,stats] = glmfit(V,firing,'normal','constant','off');
+%         bdist = mvnrnd(stats.beta,stats.covb,1000);
+%         th = cart2pol(bdist(:,1),bdist(:,2));
+        pd{day}.(fields{unit}) = stats.beta';
     end
 end
         

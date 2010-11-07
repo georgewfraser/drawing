@@ -1,4 +1,5 @@
 function controller = rateController(controlPd, rate, kin)
+% Evaluates how well control neurons are correlated with kinematics
 controller = cell(size(rate));
 for day=1:length(rate)
     controller{day} = struct();
@@ -8,9 +9,6 @@ for day=1:length(rate)
     for iif=1:length(fields)
         F = rate{day}.(fields{iif})(:,6:15);
         pdVel = [X(:) Y(:)]*controlPd{day}.(fields{iif})(1:2)';
-%         ret = cca_granger_regress([F(:) pdVel]',1,1);
-%         controller{day}.(fields{iif}) = ret.prb(2,1);
-%         controller{day}.(fields{iif}) = ret.gc(2,1);
-        controller{day}.(fields{iif}) = corr(F(:),pdVel);%abs(corr(X(:),F(:)))+abs(corr(Y(:),F(:)));
+        controller{day}.(fields{iif}) = corr(F(:),pdVel);
     end
 end

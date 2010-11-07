@@ -22,6 +22,8 @@ for day=1:length(rateMean)
         P = V \ R;
         % Estimate the target directions
         V = R / P;
+        % Constrain V to unit vectors
+        V = bsxfun(@rdivide,V,sqrt(sum(V.^2,2)));
         
         residuals = R - V*P;
         oldSSE = newSSE;
