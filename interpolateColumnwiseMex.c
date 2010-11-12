@@ -24,24 +24,24 @@ void mexFunction(
         y = all_y+c*ny;
         tx = all_tx+c*nx;
         ty = all_ty+c*ny;
-        
-        // Check for edge cases
-        if(tx[0]>ty[0]) {
-            tx[0] = ty[0];
-        }
-        if(tx[nx-1]<ty[ny-1]) {
-            tx[nx-1] = ty[ny-1];
-        }
 
         // Interpolate linearly
         ix = 0;
         for(iy=0; iy<ny; iy++) {
-            while(ix<nx-1 && tx[ix+1]<ty[iy]) {
+            while(ix<nx-2 && tx[ix+1]<ty[iy]) {
                 ix++;
             }
-
-            p2 = (ty[iy]-tx[ix])/(tx[ix+1]-tx[ix]);
-            p1 = 1-p2;
+        
+            if(ty[iy]<tx[ix]) { // ty is beyond left boundary of tx
+                p2 = 0;
+                p1 = 1;
+            } else if(tx[ix+1]<ty[iy]) { // ty is beyond right boundary
+                p2 = 1;
+                p1 = 0;
+            } else {
+                p2 = (ty[iy]-tx[ix])/(tx[ix+1]-tx[ix]);
+                p1 = 1-p2;
+            }
 
             y[iy] = p1*x[ix] + p2*x[ix+1];
         }
