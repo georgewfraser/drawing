@@ -11,21 +11,8 @@ kinematics.accY = nan(size(snips.time));
 kinematics.accZ = nan(size(snips.time));
 kinematics.speed = nan(size(snips.time));
 kinematics.curvature = nan(size(snips.time));
-    
-posTime = data.kinematics.PlexonTime;
-if(~isfield(data.kinematics,'CursorPosition'))
-    data.kinematics.CursorPosition = data.kinematics.Markers;
-end
-pos = data.kinematics.CursorPosition;
-cursor_transform = data.header.CursorTransform(1:3,:);
-cursor_transform(1,:) = cursor_transform(1,:) ./ abs(sum(cursor_transform(1,1:3)));
-pos = [pos ones(size(pos,1),1)] * cursor_transform';
-outOfView = sqrt(sum(pos.^2,2))>5;
-pos(outOfView,:) = 0;
-% Filter to 5 Hz because we are going the resolution of the snips is as low
-% as 10 Hz
-pos = filtfilt(fir1(100,5/30),1,pos);
-pos(outOfView,:) = nan;
+
+[posTime, pos] = transformAndFilterPosition(data);
 
 velTime = (posTime(1:end-1)+posTime(2:end)) ./ 2;
 vel = bsxfun(@rdivide, diff(pos), diff(posTime));

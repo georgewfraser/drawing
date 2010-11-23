@@ -1,13 +1,15 @@
 function cycles = snipDrawingCycles(drawing)
+badtrials = [];
 %[date, trial, cycle, is_ellipse, is_illusion, time]
 nTotal = numel(drawing.trials.PlexonTrialTime);
+nPoints = 20;
 cycles = struct();
-cycles.time = nan(nTotal, 20*7);
+cycles.time = nan(nTotal, nPoints*7);
 cycles.edges = nan(nTotal, 6);
 cycles.is_ellipse = false(nTotal,1);
 cycles.is_illusion = false(nTotal,1);
 cycles.is_ccw = false(nTotal,1);
-cycles.progress = nan(nTotal, 20*7);
+cycles.progress = nan(nTotal, nPoints*7);
 
 trials = drawing.trials;
 
@@ -17,11 +19,6 @@ cursor_transform = drawing.header.CursorTransform(1:3,:);
 cursor_transform(1,:) = cursor_transform(1,:) ./ abs(sum(cursor_transform(1,1:3)));
 kPos = [kPos ones(size(kPos,1),1)] * cursor_transform';
 kPos(sqrt(sum(kPos.^2,2))>5,:) = nan;
-kVelTime = (drawing.kinematics.PlexonTime(1:end-1)+drawing.kinematics.PlexonTime(2:end))./2;
-kVel = bsxfun(@rdivide,diff(kPos),diff(kPosTime));
-
-%kveltime = (kPosTime(1:end-1)+kPosTime(2:end)) ./ 2;
-%kvel = bsxfun(@rdivide, diff(kPos), diff(kPosTime));
 
 for iit=1:length(trials.PlexonTrialTime)
     progress = cumsum(diff(trials.Progress{iit}.Position)<0);
@@ -33,7 +30,7 @@ for iit=1:length(trials.PlexonTrialTime)
     tRange = find(start<kPosTime&kPosTime<finish);
     cross0 = [diff(sign(kPos(tRange,1)))/2; 0]>0;
     if(sum(cross0)~=6)
-        warning('ANALYSIS:baddata','Bad drawing trial %d!',iit);
+        badtrials(end+1) = iit; %#ok<AGROW>
         continue;
     end
     leftX = kPos(tRange(cross0),1);
@@ -42,8 +39,8 @@ for iit=1:length(trials.PlexonTrialTime)
     rightT = kPosTime(tRange(cross0)+1);
     cycleEdges = leftT.*(rightX)./(rightX-leftX) + rightT.*(-leftX)./(rightX-leftX);
     diffCycleEdges = diff(cycleEdges);
-    diffCycleEdges = diffCycleEdges([1 1:end end]) ./ 20;
-    diffCycleEdges = diffCycleEdges*(0:19);
+    diffCycleEdges = diffCycleEdges([1 1:end end]) ./ nPoints;
+    diffCycleEdges = diffCycleEdges*(0:(nPoints-1));
     diffCycleEdges = diffCycleEdges';
     extraEdges = [cycleEdges(1)-diff(cycleEdges(1:2)); cycleEdges(1:end)]';
     time = bsxfun(@plus,extraEdges,diffCycleEdges);
@@ -57,31 +54,10 @@ for iit=1:length(trials.PlexonTrialTime)
     cycles.is_ellipse(iit) = strcmp('ellipse',tok1);
     cycles.is_illusion(iit) = strcmp('illusion',tok2);
     cycles.is_ccw(iit) = ~strcmp('_cw',label(end-2:end));
-    
-    
-%     tRange = (tRange(1)-120):(tRange(end)+120);
-%     pos = interpolate(kPosTime(tRange),kPos(tRange,:),time);
-%     vel = interpolate(kVelTime(tRange),kVel(tRange,:),time);
-%     
-%     clf;
-%     subplot(3,1,1);
-%     hold on;
-%     plot(progressTime,progress);
-%     plot(cycleEdges,zeros(size(cycleEdges)),'ro');
-%     plot(time,zeros(size(time)),'.');
-%     subplot(3,1,2);
-%     hold on;
-%     plot(time,pos);
-%     plot(cycleEdges,zeros(size(cycleEdges)),'ro');
-%     plot(time,zeros(size(time)),'.');
-%     subplot(3,1,3);
-%     hold on;
-%     plot(time,vel);
-%     plot(cycleEdges,zeros(size(cycleEdges)),'ro');
-%     plot(time,zeros(size(time)),'.');
-%     pause(.5);
 end
-
+if(~isempty(badtrials))
+    warning('ANALYSIS:baddata','%d / %d bad drawing trials!',length(badtrials),length(trials.PlexonTrialTime));
+end
 
 % Eliminate outliers
 outliers = diff(cycles.edges,1,2);
