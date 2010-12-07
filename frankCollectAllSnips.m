@@ -14,7 +14,6 @@
 % coutKin = cell(size(centerOut));
 % drawingSnips = cell(size(centerOut));
 % drawingRate = cell(size(centerOut));
-drawingLagRate = cell(size(centerOut));
 % drawingKin = cell(size(centerOut));
 for iid=1:length(centerOut)
     fprintf('.');
@@ -23,7 +22,6 @@ for iid=1:length(centerOut)
 %     coutKin{iid} = snipKinematics(coutSnips{iid}, centerOut{iid});
 %     drawingSnips{iid} = snipDrawingCycles(drawing{iid});
 %     drawingRate{iid} = snipSmoothedRate(drawingSnips{iid}, drawing{iid});
-    drawingLagRate{iid} = snipSmoothedRate(drawingSnips{iid}, drawing{iid}, -.1);
 %     drawingKin{iid} = snipKinematics(drawingSnips{iid}, drawing{iid});
 end
 % fprintf('\n');
@@ -34,4 +32,4 @@ end
 % coutSnipsMean = meanByTarget3D(coutSnips, coutSnips);
 % drawingSnipsMean = meanByDrawing(drawingSnips, drawingSnips);
 
-[coutRate, coutRateMean, drawingRate, drawingLagRate, drawingRateMean] = synchFields(coutRate, coutRateMean, drawingRate, drawingLagRate, drawingRateMean);
+[coutRate, coutRateMean, drawingRate, drawingRateMean] = synchFields(coutRate, coutRateMean, drawingRate, drawingRateMean);

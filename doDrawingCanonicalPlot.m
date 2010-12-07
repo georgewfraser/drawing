@@ -1,3 +1,6 @@
+nPoints = size(drawingSnips{1}.time,2);
+perCycle = nPoints/7;
+
 canCout = projectDown(canCoeff,coutRate);
 canDrawing = projectDown(canCoeff,drawingRate);
 canCoutMean = meanByTarget3D(coutSnips, canCout);
@@ -5,9 +8,9 @@ canDrawingMean = meanByDrawing(drawingSnips, canDrawing);
 covariates = drawingCovariates(drawingKin, drawingSnips);
 covariatesMean = meanByDrawing(drawingSnips, covariates);
 
-lagValues = -.750:.010:.750;
+% lagValues = -.750:.010:.750;
 nCanonical = 7;
-[direction, illusion] = computeAllLags(coutSnipsMean, coutKinMean, canCoutMean, drawingSnipsMean, drawingKinMean, canDrawingMean, nCanonical, false);
+% [direction, illusion] = computeAllLags(coutSnipsMean, coutKinMean, canCoutMean, drawingSnipsMean, drawingKinMean, canDrawingMean, nCanonical, false);
 
 clf;
 for c=1:nCanonical
@@ -25,10 +28,10 @@ for c=1:nCanonical
     for day=1:size(img,3)
         plot(img(:,:,day)');
     end
-    set(gca,'XTick',20:20:120);
+    set(gca,'XTick',perCycle:perCycle:nPoints-perCycle);
     set(gca,'XTickLabel',1:5);%{'Cycle 1','Cycle 2','Cycle 3','Cycle 4','Cycle 5'});
     ylim([-11 0]);
-    xlim([0 140])
+    xlim([0 nPoints])
     
     name = sprintf('factor%0.2d',c);
     for day=1:length(canCoutMean)
@@ -74,27 +77,27 @@ for c=1:nCanonical
         set(gca,'XTick',[5.5 15.5]);
         set(gca,'XTickLabel',{'Hold A', 'Hold B'});
         
-        subplot(6,nCanonical,nCanonical*3+c);
-        hold on;
-        plot(lagValues, direction{day}.(name));
-%         best = find(direction{day}.(name)==max(direction{day}.(name)));
-%         line(lagValues([best best]),[0 direction{day}.(name)(best)]);
-        xlabel('Lag');
-        ylabel('Correlation');
-        xlim([min(lagValues) max(lagValues)]);
-        ylim([-1 1]);
-        title('Direction');
-        
-        subplot(6,nCanonical,nCanonical*4+c);
-        hold on;
-        plot(lagValues, illusion{day}.(name));
-%         best = find(illusion{day}.(name)==max(illusion{day}.(name)));
-%         line(lagValues([best best]),[0 illusion{day}.(name)(best)]);
-        xlabel('Lag');
-        ylabel('Correlation');
-        xlim([min(lagValues) max(lagValues)]);
-        ylim([-1 1]);
-        title('Illusion');
+%         subplot(6,nCanonical,nCanonical*3+c);
+%         hold on;
+%         plot(lagValues, direction{day}.(name));
+% %         best = find(direction{day}.(name)==max(direction{day}.(name)));
+% %         line(lagValues([best best]),[0 direction{day}.(name)(best)]);
+%         xlabel('Lag');
+%         ylabel('Correlation');
+%         xlim([min(lagValues) max(lagValues)]);
+%         ylim([-1 1]);
+%         title('Direction');
+%         
+%         subplot(6,nCanonical,nCanonical*4+c);
+%         hold on;
+%         plot(lagValues, illusion{day}.(name));
+% %         best = find(illusion{day}.(name)==max(illusion{day}.(name)));
+% %         line(lagValues([best best]),[0 illusion{day}.(name)(best)]);
+%         xlabel('Lag');
+%         ylabel('Correlation');
+%         xlim([min(lagValues) max(lagValues)]);
+%         ylim([-1 1]);
+%         title('Illusion');
     end
     
     

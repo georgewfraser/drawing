@@ -1,4 +1,4 @@
-function [canA, canB, canR, canCoeff, canLag] = drawingCanonical(drawingSnips, drawingKin, drawingRate, drawingRateLag, drawing)
+function [canA, canB, canR, canCoeff, canBasis, canLag] = drawingCanonical(drawingSnips, drawingKin, drawingRate, drawing)
 nTrials = cellfun(@(x) size(x.time,1), drawingSnips);
 fold = arrayfun(@(x) crossvalind('Kfold',x,5), nTrials, 'UniformOutput', false);
 
@@ -55,9 +55,27 @@ for k=1:5
 %         canB{day} = canB{day}*T;
 %         canR{day} = T'*canR{day}*T;
 %     end
+
+%     % Zero out non-illusion in canonical 4
+%     for day=1:length(basis)
+%         A = canA{day};
+%         A(1:14,4) = 0;
+%         sel = drawingSnips{day}.is_ellipse | ~drawingSnips{day}.is_illusion;
+%         sel = sel & fold{day}~=k;
+%         bday = structfun(@(x) x(sel,:), basis{day}, 'UniformOutput', false);
+%         dday = structfun(@(x) x(sel,:), drawingRate{day}, 'UniformOutput', false);
+%         X = unravel(bday);
+%         Y = unravel(dday);
+%         mask = sum(isnan(X),2)+sum(isnan(Y),2)==0;
+%         [A_,B,r] = canoncorr(X(mask,:)*A(:,4),Y(mask,:));
+%         canA{day}(:,4) = A(:,4);
+%         canB{day}(:,4) = B;
+%         canR{day}(4,4) = r; % This might be wrong
+%     end
     
     % Recompute latent variables with new coefficients
     canCoeff = cell(size(canB));
+    canBasis = cell(size(canA));
     for day=1:length(basis)
         B = pinv(canB{day});
         canCoeff{day} = struct();
@@ -65,20 +83,23 @@ for k=1:5
         for unit=1:size(B,2)
             canCoeff{day}.(fields{unit}) = B(:,unit)';
         end
+        A = pinv(canA{day});
+        canBasis{day} = struct();
+        fields = fieldnames(basis{day});
+        for unit=1:size(A,2)
+            canBasis{day}.(fields{unit}) = A(:,unit)';
+        end
     end
     
     testSnips = cell(size(drawingSnips));
     testRate = cell(size(drawingRate));
-    testRateLag = cell(size(drawingRate));
     for day=1:length(basis)
         sel = drawingSnips{day}.is_ellipse | ~drawingSnips{day}.is_illusion;
         sel = sel & fold{day}==k;
         testSnips{day} = structfun(@(x) x(sel,:), drawingSnips{day}, 'UniformOutput', false);
         testRate{day} = structfun(@(x) x(sel,:), drawingRate{day}, 'UniformOutput', false);
-        testRateLag{day} = structfun(@(x) x(sel,:), drawingRateLag{day}, 'UniformOutput', false);
     end
     canDrawing = projectDown(canCoeff, testRate);
-    canDrawingLag = projectDown(canCoeff, testRateLag);
-    canLag(:,k) = canonicalLags(testSnips, drawing, canDrawing, canDrawingLag);
+    canLag(:,k) = canonicalLags(testSnips, drawing, canDrawing);
 end
 

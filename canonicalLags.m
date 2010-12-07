@@ -1,4 +1,4 @@
-function lagProfiles = canonicalLags(snips, drawing, canDrawing, canDrawingLag)
+function lagProfiles = canonicalLags(snips, drawing, canDrawing)
 lagValues = -.5:.010:.5;
 lagProfiles = cell(size(snips));
 for day=1:length(snips)
@@ -23,10 +23,6 @@ for day=1:length(snips)
     % Times we are going to be looking at
     snipsTime = snips{day}.time(:);
     [snipsTime,idx] = sort(snipsTime);
-%     postStart = bsxfun(@minus, snips{day}.time, snips{day}.time(:,20));
-%     postStart = postStart(:);
-%     preEnd = bsxfun(@minus, snips{day}.time, snips{day}.time(:,121));
-%     preEnd = preEnd(:);
     
     D = nan(numel(snipsTime),2);
 
@@ -52,18 +48,6 @@ for day=1:length(snips)
                 bsxfun(@times,D,cycle==4),...
                 bsxfun(@times,D,cycle==5)];
         data = [data bsxfun(@times,data,illusion) ramp]; %#ok<AGROW>=
-        Dw = nan(size(D));
-        Dw(idx,1) = interpolate(time,dir(:,1),snipsTime+lagValues(lag)-.1);
-        Dw(idx,2) = interpolate(time,dir(:,2),snipsTime+lagValues(lag)-.1);
-        D = bsxfun(@minus,D,mean(D));
-        Dw = bsxfun(@minus,Dw,mean(Dw));
-        Dw = D-Dw*(Dw\D);
-        dataW = [bsxfun(@times,Dw,cycle==1),...
-                bsxfun(@times,Dw,cycle==2),...
-                bsxfun(@times,Dw,cycle==3),...
-                bsxfun(@times,Dw,cycle==4),...
-                bsxfun(@times,Dw,cycle==5)];
-        dataW = [dataW bsxfun(@times,dataW,illusion) ramp]; %#ok<AGROW>=
         
         fields = fieldnames(canDrawing{day});
         for unit=1:length(fields)
@@ -75,15 +59,7 @@ for day=1:length(snips)
 %             dataUnit = [dataUnit ramp]; %#ok<AGROW>
             
             R = canDrawing{day}.(fields{unit})(:);
-            Rw = canDrawingLag{day}.(fields{unit})(:);
-            R = R-mean(R);
-            Rw = Rw-mean(Rw);
-            Rw = R-Rw*(Rw\R);
-            Rw = Rw-mean(Rw);
-%             R(2:end) = R(2:end)-R(1:end-1)*(R(1:end-1)\R(2:end));
             [A,B,r] = canoncorr(R(mask), data(mask,:));
-%             [A,B,r] = canoncorr(R, data);
-            r = corr(Rw(mask)*A, dataW(mask,:)*B);
             lagProfiles{day}.(fields{unit})(lag) = r;
         end
     end
