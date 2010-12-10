@@ -1,25 +1,23 @@
-function rate = snipSmoothedRate(snips, data, varargin)
+function rateByDate = snipSmoothedRate(snipsByDate, dataByDate, varargin)
 if(~isempty(varargin))
     lag = varargin{1};
 else
     lag = 0;
 end
-rate = struct();
-cnames = fieldnames(data.spikes);
 
-smoother = 1-cos((0:.010:.2)*2*pi/.2);
-smoother = smoother./norm(smoother);
+rateByDate = cell(size(snipsByDate));
+for day=1:length(snipsByDate)
+    snips = snipsByDate{day};
+    data = dataByDate{day};
+    rate = struct();
+    cnames = fieldnames(data.spikes);
+    for iic=1:length(cnames)
+        name = cnames{iic};
+        rate.(name) = nan(size(snips.time));
 
-for iic=1:length(cnames)
-    name = cnames{iic};
-    rate.(name) = nan(size(snips.time));
-
-    for iis=1:size(snips.time,1)
-        edges = (snips.time(iis,1)-.1):.010:(snips.time(iis,end)+.1);
-        times = (edges(1:end-1)+edges(2:end))./2;
-        counts = quickHist(data.spikes.(name),edges);
-        counts = filtfilt(smoother,1,counts);
-        counts = counts ./ .010;
-        rate.(name)(iis,:) = interpolate(times, counts, snips.time(iis,:)+lag);
+        for iis=1:size(snips.time,1)
+            rate.(name)(iis,:) = cosineFilter(data.spikes.(name), snips.time(iis,:)-lag, .2);
+        end
     end
+    rateByDate{day} = rate;
 end
