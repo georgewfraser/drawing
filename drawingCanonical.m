@@ -1,4 +1,5 @@
 function [canA, canB, canR, canLag, fold] = drawingCanonical(drawingSnips, drawingKin, drawing)
+warning('off','stats:canoncorr:NotFullRank');
 nTrials = cellfun(@(x) size(x.time,1), drawingSnips);
 fold = arrayfun(@(x) crossvalind('Kfold',x,5), nTrials, 'UniformOutput', false);
 
@@ -47,26 +48,36 @@ for k=1:5
         canR{day,k} = T'*canR{day,k}*T;
     end
     
-%     fprintf('Testing %d lags',length(lagValues));
-%     canLag{day,k} = nan(length(lagValues),5);
-%     for lag=1:length(lagValues)
-%         fprintf('.');
-%         drawingRate = snipSmoothedRate(drawingSnips, drawing, lagValues(lag));
-%         for day=1:length(basis)
-%             [X,Y] = trainingData(drawingSnips, drawingRate, basis, day, fold, k);
-%             [Xtest,Ytest] = testingData(drawingSnips, drawingRate, basis, day, fold, k);
-%             A = canA{day,k};
-%             B = canB{day,k};
-%             U = X*A;
+    fprintf('Testing %d lags',length(lagValues));
+    canLag{day,k} = nan(length(lagValues),5);
+    for lag=1:length(lagValues)
+        fprintf('.');
+        drawingRate = snipSmoothedRate(drawingSnips, drawing, lagValues(lag));
+        for day=1:length(basis)
+            [X,Y] = trainingData(drawingSnips, drawingRate, basis, day, fold, k);
+            [Xtest,Ytest] = testingData(drawingSnips, drawingRate, basis, day, fold, k);
+            A = canA{day,k};
+            U = X*A;
+            
+            
+            [Alittle,B,r] = canoncorr(U(:,1:2),Y);
+            r = abs(corr(Xtest*A(:,1:2)*Alittle(:,1),Ytest*B(:,1)));
+            canLag{day,k}(lag,1) = r;
+            
+            [Alittle,B,r] = canoncorr(U(:,4:5),Y);
+            r = abs(corr(Xtest*A(:,1:2)*Alittle(:,1),Ytest*B(:,1)));
+            canLag{day,k}(lag,2) = r;
+%             
 %             for iiU=1:5
 %                 [Abad,B,r] = canoncorr(U(:,iiU),Y);
-%                 canLag{day,k}(lag,iiU) = abs(corr(Xtest*A(:,iiU),Ytest*B));
-%                 % Add something here to change B to reflect best lag
+%                 r = abs(corr(Xtest*A(:,iiU),Ytest*B));
+%                 canLag{day,k}(lag,iiU) = r;
 %             end
-%         end
-%     end
-%     fprintf('\n');
+        end
+    end
+    fprintf('\n');
 end
+warning('on','stats:canoncorr:NotFullRank');
 end
             
 
