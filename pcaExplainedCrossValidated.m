@@ -24,7 +24,6 @@ for day=1:length(rate)
     dim = size(rate{day}.(fields{1}));
     fold = crossvalind('Kfold',dim(1),5);
     fold = repmat(fold,1,dim(2));
-    keyboard; % make sure fold looks right
     fold = fold(:);
     coeffMatrix = cell(5,1);
     for k=1:5

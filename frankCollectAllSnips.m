@@ -10,10 +10,10 @@ load B:/Data/Frank/survival.mat survival
 survival = survival(nCells>60);
 
 coutSnips = snipPeak(centerOut);
-coutRate = snipSmoothedRate(coutSnips, centerOut);
+coutRate = snipSmoothedRate(coutSnips, centerOut, .4, 0);
 coutKin = snipKinematics(coutSnips, centerOut);
 drawingSnips = snipDrawingCycles(drawing);
-drawingRate = snipSmoothedRate(drawingSnips, drawing);
+drawingRate = snipSmoothedRate(drawingSnips, drawing, .4, 0);
 drawingKin = snipKinematics(drawingSnips, drawing);
 
 drawing = prune(drawing, drawingSnips, .5);

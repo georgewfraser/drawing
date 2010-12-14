@@ -1,9 +1,4 @@
-function rateByDate = snipSmoothedRate(snipsByDate, dataByDate, varargin)
-if(~isempty(varargin))
-    lag = varargin{1};
-else
-    lag = 0;
-end
+function rateByDate = snipSmoothedRate(snipsByDate, dataByDate, width, lag)
 
 rateByDate = cell(size(snipsByDate));
 for day=1:length(snipsByDate)
@@ -16,7 +11,7 @@ for day=1:length(snipsByDate)
         rate.(name) = nan(size(snips.time));
 
         for iis=1:size(snips.time,1)
-            rate.(name)(iis,:) = cosineFilter(data.spikes.(name), snips.time(iis,:)-lag, .2);
+            rate.(name)(iis,:) = cosineFilter(data.spikes.(name), snips.time(iis,:)-lag, width);
         end
     end
     rateByDate{day} = rate;

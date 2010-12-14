@@ -3,32 +3,28 @@ controlData = loadSelectedFiles('B:/Data/Willy/%s/Willy.BC.%0.5d.CenterOut.mat',
 latePerturb = [perturb(:,1)+5 perturb(:,2)];
 perturbData = loadSelectedFiles('B:/Data/Willy/%s/Willy.BC.%0.5d.CenterOut.mat', 'mm-dd-yy', dates, latePerturb);
 
-controlSnips = cell(size(controlData));
-controlRate = cell(size(controlData));
-controlRateMean = cell(size(controlData));
-perturbSnips = cell(size(controlData));
-perturbRate = cell(size(controlData));
-perturbRateMean = cell(size(controlData));
-controlKin = cell(size(controlData));
-controlKinMean = cell(size(controlData));
-perturbKin = cell(size(controlData));
-perturbKinMean = cell(size(controlData));
-for iid=1:length(controlData)
-    controlSnips{iid} = snipPeak(controlData{iid});
-    controlRate{iid} = snipStabilizedSmoothedRate(controlSnips{iid},controlData{iid});
-    controlKin{iid} = snipKinematics(controlSnips{iid}, controlData{iid});
-    controlKinMean{iid} = structfun(@(X) meanByTarget(controlSnips{iid}, X), controlKin{iid}, 'UniformOutput', false);
-    
-    perturbSnips{iid} = snipPeak(perturbData{iid});
-    perturbKin{iid} = snipKinematics(perturbSnips{iid}, perturbData{iid});
-    perturbRate{iid} = snipStabilizedSmoothedRate(perturbSnips{iid},perturbData{iid});
-    perturbKinMean{iid} = structfun(@(X) meanByTarget(perturbSnips{iid}, X), perturbKin{iid}, 'UniformOutput', false);
-    
-    controlRateMean{iid} = structfun(@(X) meanByTarget(controlSnips{iid}, X), controlRate{iid}, 'UniformOutput', false);
-    perturbRateMean{iid} = structfun(@(X) meanByTarget(perturbSnips{iid}, X), perturbRate{iid}, 'UniformOutput', false);
+for day=1:length(controlData)
+    spkC = controlData{day}.spikes;
+    spkP = perturbData{day}.spikes;
+    [spkC,spkP] = synchFields({spkC},{spkP});
+    controlData{day}.spikes = spkC{1};
+    perturbData{day}.spikes = spkP{1};
 end
-[controlRate, perturbRate] = synchFields(controlRate, perturbRate);
-[controlRateMean, perturbRateMean] = synchFields(controlRateMean, perturbRateMean);
+
+controlSnips = snipPeak(controlData);
+controlRate = snipSmoothedRate(controlSnips,controlData, .4, 0);
+controlKin = snipKinematics(controlSnips, controlData);
+
+perturbSnips = snipPeak(perturbData);
+perturbKin = snipKinematics(perturbSnips, perturbData);
+perturbRate = snipSmoothedRate(perturbSnips,perturbData, .4, 0);
+
+controlKinMean = meanByTarget(controlSnips, controlKin);
+perturbKinMean = meanByTarget(perturbSnips, perturbKin);
+controlRateMean = meanByTarget(controlSnips, controlRate);
+perturbRateMean = meanByTarget(perturbSnips, perturbRate);
+    
+% [controlRate, controlRateMean, perturbRate, perturbRateMean, controlData, perturbData] = synchFields(controlRate, controlRateMean, perturbRate, perturbRateMean, controlData, perturbData);
 
 [controlPd, perturbPd] = extractionModulePD('B:/Data/Willy/%s/Willy.BC.%0.5d.CenterOut.mat', 'mm-dd-yy', dates, control, perturb);
 [controlPd, perturbPd] = synchFields(controlPd, perturbPd);
