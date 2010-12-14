@@ -16,4 +16,6 @@ for outSeg=1:length(outStart)
 end
 % Filter to 5 Hz because we are going the resolution of the snips is as low
 % as 10 Hz
-pos = filtfilt(fir1(100,5/30),1,pos);
+if(median(diff(posTime))<1/50) % hand control only
+    pos = filtfilt(fir1(100,5/30),1,pos);
+end

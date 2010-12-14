@@ -3,7 +3,7 @@ warning('off','stats:canoncorr:NotFullRank');
 nTrials = cellfun(@(x) size(x.time,1), snips);
 fold = arrayfun(@(x) crossvalind('Kfold',x,5), nTrials, 'UniformOutput', false);
 
-basis = cout2DBasis(snips);
+basis = cout2DBasis(snips, kin);
 canLag = cell(length(basis),5);
 canA = cell(length(basis),5);
 canB = cell(length(basis),5);
