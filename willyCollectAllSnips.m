@@ -3,13 +3,13 @@ controlData = loadSelectedFiles('B:/Data/Willy/%s/Willy.BC.%0.5d.CenterOut.mat',
 latePerturb = [perturb(:,1)+5 perturb(:,2)];
 perturbData = loadSelectedFiles('B:/Data/Willy/%s/Willy.BC.%0.5d.CenterOut.mat', 'mm-dd-yy', dates, latePerturb);
 
-for day=1:length(controlData)
-    spkC = controlData{day}.spikes;
-    spkP = perturbData{day}.spikes;
-    [spkC,spkP] = synchFields({spkC},{spkP});
-    controlData{day}.spikes = spkC{1};
-    perturbData{day}.spikes = spkP{1};
-end
+% for day=1:length(controlData)
+%     spkC = controlData{day}.spikes;
+%     spkP = perturbData{day}.spikes;
+%     [spkC,spkP] = synchFields({spkC},{spkP});
+%     controlData{day}.spikes = spkC{1};
+%     perturbData{day}.spikes = spkP{1};
+% end
 
 controlSnips = snipPeak(controlData);
 controlRate = snipSmoothedRate(controlSnips,controlData, .4, 0);
@@ -27,7 +27,7 @@ perturbRateMean = meanByTarget(perturbSnips, perturbRate);
 % [controlRate, controlRateMean, perturbRate, perturbRateMean, controlData, perturbData] = synchFields(controlRate, controlRateMean, perturbRate, perturbRateMean, controlData, perturbData);
 
 [controlPd, perturbPd] = extractionModulePD('B:/Data/Willy/%s/Willy.BC.%0.5d.CenterOut.mat', 'mm-dd-yy', dates, control, perturb);
-[controlPd, perturbPd] = synchFields(controlPd, perturbPd);
+[controlRate, controlRateMean, perturbRate, perturbRateMean, controlPd, perturbPd] = synchFields(controlRate, controlRateMean, perturbRate, perturbRateMean, controlPd, perturbPd);
 
 err = nan(length(controlRateMean),1);
 for day=1:length(err)

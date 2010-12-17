@@ -8,8 +8,8 @@ for day=1:length(kin)
     % set
     illusion = repmat(snips{day}.is_illusion,1,dim(2));
     illusion = illusion(:);
-    ramp = repmat((0:dim(2)-1)/(dim(2)-1),dim(1),1);
-    ramp = ramp(:);
+%     ramp = repmat((0:dim(2)-1)/(dim(2)-1),dim(1),1);
+%     ramp = ramp(:);
     cycle = repmat([nan 1:5 nan],dim(2)/7,1);
     cycle = repmat(cycle(:)',dim(1),1);
     cycle = cycle(:);
@@ -23,7 +23,7 @@ for day=1:length(kin)
             bsxfun(@times,D,cycle==3),...
             bsxfun(@times,D,cycle==4),...
             bsxfun(@times,D,cycle==5)];
-    data = [data bsxfun(@times,data,illusion) ramp]; %#ok<AGROW>
+    data = [data bsxfun(@times,data,illusion)]; %#ok<AGROW>
     
     for b=1:size(data,2)
         basis{day}.(sprintf('basis%0.2d',b)) = reshape(data(:,b),dim);

@@ -1,12 +1,12 @@
-function [pos, vel, acc, hold, holdA, holdB] = covariateRepresentation(coeff, rate, kin)
-pos = nan(length(rate),length(coeff));
+function [pos, vel, acc, hold, holdA, holdB] = covariateRepresentation(factors, kin)
+pos = nan(length(kin),size(factors,2));
 vel = nan(size(pos));
 acc = nan(size(pos));
 hold = nan(size(pos));
 holdA = nan(size(pos));
 holdB = nan(size(pos));
 
-for day=1:length(rate)
+for day=1:length(kin)
     P = [kin{day}.posX(:) kin{day}.posY(:) kin{day}.posZ(:)];
     V = [kin{day}.velX(:) kin{day}.velY(:) kin{day}.velZ(:)];
     Ax = gradient(kin{day}.velX);
@@ -27,12 +27,8 @@ for day=1:length(rate)
     HB(:,16:end) = 1;
     HB = HB(:);
     
-    R = unravel(rate{day});
-    R = bsxfun(@minus,R,mean(R));
-    
-    for nFactors=1:length(coeff)
-        C = unravel(coeff{nFactors}{day});
-        F = R*pinv(C);
+    for nFactors=1:size(factors,2)
+        F = unravel(factors{day,nFactors});
         
         pos(day,nFactors) = getR2(F,P);
         vel(day,nFactors) = getR2(F,V);
