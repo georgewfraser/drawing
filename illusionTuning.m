@@ -1,47 +1,24 @@
-function [model, modulation, channel] = illusionTuning(drawingRateMean, drawingSnipsMean)
+function [model, modulation, channel] = illusionTuning(drawingRateMean)
 model = [];
 modulation = [];
 channel = [];
 for day=1:length(drawingRateMean)
-    progress = drawingSnipsMean{day}.progress(4,:);
-    progress = (progress-4)./2;
-    progress = max(progress,0);
-    progress = min(progress,1);
-    
     cnames = fieldnames(drawingRateMean{day});
     channel(end+(1:length(cnames))) = cellfun(@(x) str2double(x(5:7)), cnames);
     for unit=1:length(cnames)
-        circle = drawingRateMean{day}.(cnames{unit})(1,:);
-        ellipse = drawingRateMean{day}.(cnames{unit})(3,:);
-        illusion = drawingRateMean{day}.(cnames{unit})(4,:);
+        circle = drawingRateMean{day}.(cnames{unit})(1,80:120);
+        ellipse = drawingRateMean{day}.(cnames{unit})(3,80:120);
+        illusion = drawingRateMean{day}.(cnames{unit})(4,80:120);
         
-        b = regress(illusion',[ones(size(circle)); circle; (ellipse-circle).*progress]');
-        model(end+1) = b(end);
-        modulation(end+1) = norm(ellipse-circle);
+        ellipse = ellipse-circle;
+        illusion = illusion-circle;
         
-%         ellipse = ellipse-circle;
-%         illusion = illusion-circle;
+        modulation(end+1) = norm(ellipse);
+        model(end+1) = illusion*ellipse'/norm(ellipse)^2;
         
-        if(modulation(end)>1)
+        if(modulation(end)>4)
             keyboard;
         end
-        
-%         model(end+1) = (illusion*ellipse')./norm(ellipse)^2;
-        
-%         inflect = gradient(sign(gradient(circle)))~=0;
-%         circle = range(circle(inflect));
-%         inflect = gradient(sign(gradient(ellipse)))~=0;
-%         ellipse = range(ellipse(inflect));
-%         inflect = gradient(sign(gradient(illusion)))~=0;
-%         illusion = range(illusion(inflect));
-%         
-%         if(isempty(circle)), circle=0; end
-%         if(isempty(ellipse)), ellipse=0; end
-%         if(isempty(illusion)), illusion=0; end
-%         
-%         C(end+1) = circle;
-%         E(end+1) = ellipse;
-%         I(end+1) = illusion;
     end
 end
 
