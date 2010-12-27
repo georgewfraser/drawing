@@ -16,15 +16,20 @@ for day=1:length(drawingRateMean)
         ellipse = drawingRateMean{day}.(cnames{unit})(3,:);
         illusion = drawingRateMean{day}.(cnames{unit})(4,:);
         
-        subplot(2,1,1);
-        plot([circle; ellipse; illusion]');
-        [cycleRange, magnitude, phase] = cycleStats(circle);
-        edges = phase/2/pi*20+(20:20:120);
-        line([edges; edges]',[0 max(circle)]);
+        circle = circle-mean(circle);
+        ellipse = ellipse-mean(ellipse);
+        illusion = illusion-mean(illusion);
         
-        subplot(2,1,2);
-        plot([cycleStats(circle); cycleStats(ellipse); cycleStats(illusion)]');
-        keyboard;
+        b = regress(illusion', [ellipse; (circle-ellipse).*progress]');
+        
+        modulation(end+1) = norm(ellipse-circle);
+        model(end+1) = b(2);
+        
+        if(modulation(end)>10)
+            clf;
+            showAllDrawingPlots(struct('a',drawingRateMean{day}.(cnames{unit})));
+            keyboard;
+        end
     end
 end
 
@@ -51,20 +56,20 @@ title('M1');
 axis tight
 box off
 
-set(gcf,'PaperPosition',[0 0 3.35 3.35]/2);
-
-end
-
-function [cycleRange, magnitude, phase] = cycleStats(circle)
-b = sin((21:120)*2*pi/20)*circle(21:120)';
-a = cos((21:120)*2*pi/20)*circle(21:120)';
-magnitude = sqrt(a^2+b^2);
-phase = -atan2(a,b);
-
-cycleStart = floor(phase/2/pi*20+(20:20:100));
-cycleEnd = ceil(phase/2/pi*20+(40:20:120));
-cycleRange = nan(1,5);
-for i=1:5
-    cycleRange(i) = range(circle(cycleStart(i):cycleEnd(i)));
-end
-end
+set(gcf,'PaperPosition',[0 0 3.35 3.35]/2)
+% 
+% gscatter(model(:,1),model(:,2),channel>100,'br','.x',4)
+% biggest = sqrt(sum(model.^2,2));
+% [biggest,idx] = sort(biggest,'descend');
+% for i=1:100
+%     text(model(idx(i),1),model(idx(i),2),num2str(idx(i)));
+% end
+% axis image
+% line([0 25],[0 25])
+% line([0 25],[0 -25])
+% line([0 25],[0 0])
+% xlim([0 25]);
+% ylim([-25 25])
+% xlabel('Motor');
+% ylabel('Visual');
+% set(gcf,'PaperPosition',[0 0 3.35/2 3.35])
