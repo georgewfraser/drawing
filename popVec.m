@@ -1,22 +1,30 @@
-function [ant, post] = popVec(drawingKinMean, drawingRateMean)
-kin = cellfun(@(day) struct('velX', day.velX), drawingKinMean, 'UniformOutput', false);
+function [ant, post] = popVec(coutKinMean, coutRateMean, drawingKinMean, drawingRateMean)
+md = moddepth(drawingRateMean);
 
+kin = cellfun(@(day) struct('velX', day.velX(:,14)), coutKinMean, 'UniformOutput', false);
 kin = unravelAll(kin);
 kin = mean(kin,2);
-rate = unravelAll(drawingRateMean);
+rate = cellfun(@(day) structfun(@(X) X(:,14), day, 'UniformOutput', false), coutRateMean, 'UniformOutput', false);
+rate = unravelAll(rate);
 rate = bsxfun(@minus, rate, mean(rate));
 
 channel = cellfun(@fieldnames, drawingRateMean, 'UniformOutput', false);
 channel = cellfun(@(day) cellfun(@(x) str2double(x(5:7)), day), channel, 'UniformOutput', false);
 channel = cell2mat(channel);
 
-% Train with circle, ellipse
-antModel = rate([1:4:end 3:4:end],channel<100)\kin([1:4:end 3:4:end]);
-postModel = rate([1:4:end 3:4:end],channel>100)\kin([1:4:end 3:4:end]);
+antModel = rate(:,channel<100&md>quantile(md,.9))\kin;
+postModel = rate(:,channel>100&md>quantile(md,.9))\kin;
+
+kin = cellfun(@(day) struct('velX', day.velX), drawingKinMean, 'UniformOutput', false);
+kin = unravelAll(kin);
+kin = mean(kin,2);
+rate = unravelAll(drawingRateMean);
+rate = bsxfun(@minus, rate, mean(rate));
+
 % Predict illusion (and others)
-ant = rate(:,channel<100)*antModel;
+ant = rate(:,channel<100&md>quantile(md,.9))*antModel;
 ant = reshape(ant,4,140);
-post = rate(:,channel>100)*postModel;
+post = rate(:,channel>100&md>quantile(md,.9))*postModel;
 post = reshape(post,4,140);
 
 yrange = [min(min(ant(:)),min(post(:))) max(max(ant(:)),max(post(:)))];
