@@ -11,8 +11,15 @@ pos = [pos ones(size(pos,1),1)] * cursor_transform';
 outOfView = sqrt(sum(pos.^2,2))>5;
 outStart = find(diff(outOfView)==1);
 outEnd = find(diff(outOfView)==-1);
+if(outOfView(1))
+    outEnd = outEnd(2:end);
+end
+if(outOfView(end))
+    outStart = outStart(1:end-1);
+end
 for outSeg=1:length(outStart)
-    pos(outStart(outSeg):outEnd(outSeg)) = pos(outStart(outSeg));
+    n = outEnd(outSeg)-outStart(outSeg)+1;
+    pos(outStart(outSeg):outEnd(outSeg),:) = repmat(pos(outStart(outSeg),:),n,1);
 end
 % Filter to 5 Hz because we are going the resolution of the snips is as low
 % as 10 Hz

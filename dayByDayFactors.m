@@ -32,6 +32,13 @@ for day=1:length(rate1)
     fold2 = repmat(crossvalind('Kfold',dim2(1),5),1,dim2(2));
     fold2 = fold2(:);
     
+    for k=1:5 % Add a little variance so factoran won't error
+        mask = std(X1(fold1==k,:))==0;
+        X1(find(fold1==k,1),mask) = 1;
+        mask = std(X2(fold2==k,:))==0;
+        X2(find(fold2==k,1),mask) = 1;
+    end
+    
     fprintf('%d \t',day);
     for nFactors=1:min(FACTOR_LIMIT,size(X1,2))
         df = .5*((size(X1,2)-nFactors)^2 - (size(X1,2)+nFactors));
@@ -42,11 +49,7 @@ for day=1:length(rate1)
         F2k = nan(size(X2,1),nFactors);
         for k=1:5
             fprintf('.');
-            try
-                [lambda,psi] = factoran(X1(fold1~=k,:), nFactors);
-            catch e
-                [lambda,psi] = factoran(X1(fold1~=k,:), nFactors, 'rotate', 'none');
-            end
+            [lambda,psi] = factoran(X1(fold1~=k,:), nFactors, 'rotate', 'none');
                         
             sqrtPsi = sqrt(psi);
             invsqrtPsi = 1 ./ sqrtPsi;
@@ -59,7 +62,7 @@ for day=1:length(rate1)
             for unit=1:size(X1,2)
                 mask = (1:size(X1,2))~=unit;
                 F = (X0(fold1==k,mask)*diag(invsqrtPsi(mask))) / (lambda(mask,:)'*diag(invsqrtPsi(mask)));
-                X1r(fold1==k,unit) = F*lambda(unit,:)'+meanX(unit);
+                X1r(fold1==k,unit) = F*lambda(unit,:)'*stdX(unit)+meanX(unit);
             end
             F1k(fold1==k,:) = (X0(fold1==k,:)*diag(invsqrtPsi)) / (lambda'*diag(invsqrtPsi));
             
@@ -71,9 +74,10 @@ for day=1:length(rate1)
             for unit=1:size(X1,2)
                 mask = (1:size(X1,2))~=unit;
                 F = (X0(fold2==k,mask)*diag(invsqrtPsi(mask))) / (lambda(mask,:)'*diag(invsqrtPsi(mask)));
-                X2r(fold2==k,unit) = F*lambda(unit,:)'+meanX(unit);
+                X2r(fold2==k,unit) = F*lambda(unit,:)'*stdX(unit)+meanX(unit);
             end
             F2k(fold2==k,:) = (X0(fold2==k,:)*diag(invsqrtPsi)) / (lambda'*diag(invsqrtPsi));
+            
         end
         
         recon1{day,nFactors} = reravel(X1r,rate1{day});

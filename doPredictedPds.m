@@ -1,5 +1,5 @@
 % % Now uncombine the reconstructions into control and perturb
-[factors1, controlRateRecon, controlRateExplained, factors2, perturbRateRecon, perturbRateExplained] = dayByDayFactors(controlRate, perturbRate);
+[controlFactors, controlRateRecon, controlRateExplained, perturbFactors, perturbRateRecon, perturbRateExplained] = dayByDayFactors(controlRate, perturbRate);
 
 best = bsxfun(@eq,controlRateExplained,max(controlRateExplained,[],2));
 crrBest = controlRateRecon'; crrBest = crrBest(best');
@@ -96,7 +96,7 @@ y = (wrapToPi(perturbE-controlE).*sign(meanChange)-abs(meanChange))';
 %     x = localPdChange(controlF,perturbF);
 %     y = localPdChange(controlE,perturbE);
 %     y = x+wrapToPi(y-x);
-plot(x, y,'k.');
+plot(x, y,'r.');
 line([-pi pi],[-pi pi]);
 axis image;
 xlim([-pi pi]*.5);

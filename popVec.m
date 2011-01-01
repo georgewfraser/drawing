@@ -1,9 +1,14 @@
 function [ant, post] = popVec(coutKinMean, coutRateMean, drawingKinMean, drawingRateMean)
 md = moddepth(drawingRateMean);
 
-kin = cellfun(@(day) struct('velX', day.velX(:,14)), coutKinMean, 'UniformOutput', false);
-kin = unravelAll(kin);
-kin = mean(kin,2);
+kinX = cellfun(@(day) struct('velX', day.velX(:,14)), coutKinMean, 'UniformOutput', false);
+kinX = unravelAll(kinX);
+kinX = mean(kinX,2);
+kinY = cellfun(@(day) struct('velY', day.velY(:,14)), coutKinMean, 'UniformOutput', false);
+kinY = unravelAll(kinY);
+kinY = mean(kinY,2);
+kin = [kinX kinY];
+kin = bsxfun(@rdivide, kin, sqrt(sum(kin.^2,2)));
 rate = cellfun(@(day) structfun(@(X) X(:,14), day, 'UniformOutput', false), coutRateMean, 'UniformOutput', false);
 rate = unravelAll(rate);
 rate = bsxfun(@minus, rate, mean(rate));
@@ -12,22 +17,32 @@ channel = cellfun(@fieldnames, drawingRateMean, 'UniformOutput', false);
 channel = cellfun(@(day) cellfun(@(x) str2double(x(5:7)), day), channel, 'UniformOutput', false);
 channel = cell2mat(channel);
 
-antModel = rate(:,channel<100&md>quantile(md,.9))\kin;
-postModel = rate(:,channel>100&md>quantile(md,.9))\kin;
+antModel = rate(:,channel<100&md>quantile(md,.5))\kin;
+postModel = rate(:,channel>100&md>quantile(md,.5))\kin;
 
-kin = cellfun(@(day) struct('velX', day.velX), drawingKinMean, 'UniformOutput', false);
-kin = unravelAll(kin);
-kin = mean(kin,2);
 rate = unravelAll(drawingRateMean);
 rate = bsxfun(@minus, rate, mean(rate));
 
 % Predict illusion (and others)
-ant = rate(:,channel<100&md>quantile(md,.9))*antModel;
+ant = rate(:,channel<100&md>quantile(md,.5))*antModel;
+post = rate(:,channel>100&md>quantile(md,.5))*postModel;
+
+% speed = cellfun(@(day) repmat(day.speed(:,21:40),1,7), drawingKinMean, 'UniformOutput', false);
+speed = cellfun(@(day) day.speed, drawingKinMean, 'UniformOutput', false);
+speed = reshape(speed,[1 1 numel(speed)]);
+speed = mean(cell2mat(speed),3);
+speed = speed(:);
+
+ant = bsxfun(@rdivide,ant,sqrt(sum(ant.^2,2)));
+post = bsxfun(@rdivide,post,sqrt(sum(post.^2,2)));
+ant = cart2pol(ant(:,1),ant(:,2));
+post = cart2pol(post(:,1),post(:,2));
+
 ant = reshape(ant,4,140);
-post = rate(:,channel>100&md>quantile(md,.9))*postModel;
 post = reshape(post,4,140);
 
-yrange = [min(min(ant(:)),min(post(:))) max(max(ant(:)),max(post(:)))];
+% yrange = [min(min(ant(:)),min(post(:))) max(max(ant(:)),max(post(:)))];
+yrange = [-pi pi];
 
 clf
 subplot(3,1,1), hold on

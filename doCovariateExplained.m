@@ -1,4 +1,9 @@
-[pos, vel, acc, hold, holdA, holdB] = covariateRepresentation(factors1, controlKin);
+% [coutFactors, coutRecon, coutExplained, drawingFactors, drawingRecon, drawingExplained] = dayByDayFactors(coutRate, drawingRate);
+% coutFactorsMean = cell(size(coutFactors));
+% for col=1:size(coutFactorsMean,2)
+%     coutFactorsMean(:,col) = meanByTarget3D(coutSnips, coutFactors(:,col));
+% end
+% [pos, vel, acc, hold, holdA, holdB] = covariateRepresentation(coutFactorsMean, coutKinMean);
 
 figure(1); clf;
 plot([mean(pos); mean(vel); mean(acc); mean(hold)]','LineWidth',2);
@@ -6,7 +11,7 @@ legend('Position', 'Velocity', 'Acceleration', 'Hold');
 set(gcf,'PaperPosition',[0 0 3.35 3.35/2])
 xlabel('# Factors');
 ylabel('Covariate R^2')
-ylim([0 1]);
+ylim([0 .75]);
 box off;
 
 % rot = covariateRotation(controlCoeff{15}, controlRateMean, controlKinMean);

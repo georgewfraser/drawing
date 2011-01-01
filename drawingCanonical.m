@@ -33,6 +33,8 @@ for k=1:5
 
     % Rearrange the correlates so that they correspond to the same elements
     % each day
+    % Even if you don't do this you still get the right result, it just has
+    % some inversions in it
     quality = cellfun(@(X) mean(X(:)), canR);
     best = quality==max(quality(:));
     for day=1:length(basis)
