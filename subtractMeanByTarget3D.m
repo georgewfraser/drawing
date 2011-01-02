@@ -1,18 +1,18 @@
-function [start, targ, both] = subtractMeanByTarget3D(snips, var)
-start = cell(size(var));
-targ = cell(size(var));
+function [direction, endpoint, both] = subtractMeanByTarget3D(snips, var)
+direction = cell(size(var));
+endpoint = cell(size(var));
 both = cell(size(var));
 for day=1:length(snips)
-    start{day} = struct();
-    targ{day} = struct();
+    direction{day} = struct();
+    endpoint{day} = struct();
     both{day} = struct();
     fields = fieldnames(var{day});
     for f=1:length(fields)
         X = var{day}.(fields{f});
         % We are going to construct a mean such that each outward movement is
         % matched up with an inward movement
-        start{day}.(fields{f}) = meanSub(X, snips{day}.startPos);
-        targ{day}.(fields{f}) = meanSub(X, snips{day}.targetPos);
+        direction{day}.(fields{f}) = meanSub(X, snips{day}.targetPos-snips{day}.startPos);
+        endpoint{day}.(fields{f}) = meanSub(X, snips{day}.targetPos);
         both{day}.(fields{f}) = meanSub(X, [snips{day}.startPos snips{day}.targetPos]);
     end
 end
