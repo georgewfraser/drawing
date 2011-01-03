@@ -1,8 +1,9 @@
-function [factors1, recon1, explained1, factors2, recon2, explained2] = dayByDayFactors(rate1, rate2)
+function [model, factors1, recon1, explained1, factors2, recon2, explained2] = dayByDayFactors(rate1, rate2)
 warning('off','stats:factoran:ZeroVariance');
 warning('off','stats:factoran:IterOrEvalLimit');
 
 FACTOR_LIMIT = min(15,min(cellfun(@(x) length(fieldnames(x)), rate1)));
+model = cell(numel(rate1),FACTOR_LIMIT);
 factors1 = cell(numel(rate1),FACTOR_LIMIT);
 recon1 = cell(numel(rate1),FACTOR_LIMIT);
 factors2 = cell(numel(rate1),FACTOR_LIMIT);
@@ -79,6 +80,9 @@ for day=1:length(rate1)
             F2k(fold2==k,:) = (X0(fold2==k,:)*diag(invsqrtPsi)) / (lambda'*diag(invsqrtPsi));
             
         end
+        lambda = factoran(X1, nFactors, 'rotate', 'none');
+        stdX = std(X1);
+        model{day,nFactors} = lambda'*diag(stdX);
         
         recon1{day,nFactors} = reravel(X1r,rate1{day});
         factors1{day,nFactors} = struct();
@@ -89,7 +93,7 @@ for day=1:length(rate1)
         
         recon2{day,nFactors} = reravel(X2r,rate2{day});
         factors2{day,nFactors} = struct();
-        for var=2:size(F2k,2)
+        for var=1:size(F2k,2)
             factors2{day,nFactors}.(sprintf('factor%0.2d',var)) = reshape(F2k(:,var),dim2);
         end
         explained2(day,nFactors) = 1 - sum(sum((X2-X2r).^2)) / sum(sum(bsxfun(@minus,X2,mean(X2)).^2));

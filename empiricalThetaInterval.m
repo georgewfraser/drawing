@@ -1,4 +1,4 @@
-function pd = empiricalPd(snips, rate, varargin)
+function pd = empiricalThetaInterval(snips, rate, varargin)
 if(isempty(varargin))
     time = 6:15;
 else
@@ -15,9 +15,11 @@ for day=1:length(pd)
         firing = mean(rate{day}.(fields{unit})(:,time),2);
 %         firing = firing-mean(firing);
 %         pd{day}.(fields{unit}) = regress(firing,V)';
-        b = regress(firing,[ones(size(V,1),1) V]);
-        b = b(2:end);
-        pd{day}.(fields{unit}) = b';
+%         b = regress(firing,[ones(size(V,1),1) V]);
+        [b,dev,stats] = glmfit(V,firing);
+        bdist = mvnrnd(b,stats.covb,1000);
+        th = cart2pol(bdist(:,2),bdist(:,3));
+        pd{day}.(fields{unit}) = reshape(th,1,numel(th));%quantile(th,[.025 .975]);
     end
 end
         

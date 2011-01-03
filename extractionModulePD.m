@@ -9,8 +9,8 @@ for iid=1:length(dates)
     names = cellstr(controlData.header.cell_data.Firing);
     for iin=1:length(names)
         if(controlData.header.cell_data.ModulatedCellsList(iin))
-            controlPd{iid}.(names{iin}) = controlData.header.cell_data.PD(iin,:);
-            perturbPd{iid}.(names{iin}) = perturbData.header.cell_data_modified.PD(iin,:);
+            controlPd{iid}.(names{iin}) = controlData.header.cell_data.PD(iin,:)./controlData.header.cell_data.ModDepth(iin);
+            perturbPd{iid}.(names{iin}) = perturbData.header.cell_data_modified.PD(iin,:)./perturbData.header.cell_data_modified.ModDepth(iin);
         end
     end
 end

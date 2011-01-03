@@ -1,8 +1,9 @@
+function checkData(controlData, perturbData, control, perturb, dates, monkey)
 for day=1:length(dates)
     fprintf('%s \n',datestr(dates(day)));
     
     filenum = control(day,1)+floor(rand(1)*diff(control(day,:)));
-    filename = sprintf('B:/Data/Arthur/%s/Arthur.BC.%0.5d.CenterOut.mat',datestr(dates(day),'mm-dd-yy'), filenum);
+    filename = sprintf('B:/Data/%s/%s/%s.BC.%0.5d.CenterOut.mat',monkey,datestr(dates(day),'mm-dd-yy'), monkey, filenum);
     fprintf('%s \n', filename);
     
     testData = load(filename);
@@ -27,7 +28,7 @@ for day=1:length(dates)
     end
     
     filenum = perturb(day,1)+5+floor(rand(1)*(diff(perturb(day,:))-5));
-    filename = sprintf('B:/Data/Arthur/%s/Arthur.BC.%0.5d.CenterOut.mat',datestr(dates(day),'mm-dd-yy'), filenum);
+    filename = sprintf('B:/Data/%s/%s/%s.BC.%0.5d.CenterOut.mat',monkey,datestr(dates(day),'mm-dd-yy'), monkey, filenum);
     fprintf('%s \n', filename);
     
     testData = load(filename);

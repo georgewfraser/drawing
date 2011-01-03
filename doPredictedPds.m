@@ -1,5 +1,5 @@
 % % Now uncombine the reconstructions into control and perturb
-[controlFactors, controlRateRecon, controlRateExplained, perturbFactors, perturbRateRecon, perturbRateExplained] = dayByDayFactors(controlRate, perturbRate);
+% [controlFactors, controlRateRecon, controlRateExplained, perturbFactors, perturbRateRecon, perturbRateExplained] = dayByDayFactors(controlRate, perturbRate);
 
 best = bsxfun(@eq,controlRateExplained,max(controlRateExplained,[],2));
 crrBest = controlRateRecon'; crrBest = crrBest(best');
