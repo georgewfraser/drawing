@@ -1,6 +1,6 @@
-function [model, uncertainty, channel] = illusionTuning(drawingSnips, drawingKin, drawingRate)
+function [model, separation, channel] = illusionTuning(drawingSnips, drawingKin, drawingRate)
 model = [];
-uncertainty = [];
+separation = [];
 channel = [];
 for day=1:length(drawingRate)
     progress = drawingSnips{day}.progress(drawingSnips{day}.is_ellipse&drawingSnips{day}.is_illusion,:);
@@ -8,28 +8,24 @@ for day=1:length(drawingRate)
     progress = max(progress,0);
     progress = min(progress,1);
     
-    Vx = cellfun(@(day) day.velX, drawingKin, 'UniformOutput', false);
-    Vy = cellfun(@(day) day.velY, drawingKin, 'UniformOutput', false);
-    
-    
     cnames = fieldnames(drawingRate{day});
     channel(end+(1:length(cnames))) = cellfun(@(x) str2double(x(5:7)), cnames);
     for unit=1:length(cnames)
-        circleX = drawingKin{day}.velX(~drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
-        circleY = drawingKin{day}.velY(~drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
-        circleSpeed = sqrt(circleX.^2+circleY.^2);
-        circleDX = circleX./circleSpeed;
-        circleDY = circleY./circleSpeed;
-        ellipseX = drawingKin{day}.velX(drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
-        ellipseY = drawingKin{day}.velY(drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
-        ellipseSpeed = sqrt(ellipseX.^2+ellipseY.^2);
-        ellipseDX = ellipseX./ellipseSpeed;
-        ellipseDY = ellipseY./ellipseSpeed;
-        illusionX = drawingKin{day}.velX(drawingSnips{day}.is_ellipse&drawingSnips{day}.is_illusion,:);
-        illusionY = drawingKin{day}.velY(drawingSnips{day}.is_ellipse&drawingSnips{day}.is_illusion,:);
-        illusionSpeed = sqrt(illusionX.^2+illusionY.^2);
-        illusionDX = illusionX./illusionSpeed;
-        illusionDY = illusionY./illusionSpeed;
+%         circleX = drawingKin{day}.velX(~drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
+%         circleY = drawingKin{day}.velY(~drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
+%         circleSpeed = sqrt(circleX.^2+circleY.^2);
+%         circleX = circleX./circleSpeed;
+%         circleY = circleY./circleSpeed;
+%         ellipseX = drawingKin{day}.velX(drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
+%         ellipseY = drawingKin{day}.velY(drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
+%         ellipseSpeed = sqrt(ellipseX.^2+ellipseY.^2);
+%         ellipseX = ellipseX./ellipseSpeed;
+%         ellipseY = ellipseY./ellipseSpeed;
+%         illusionX = drawingKin{day}.velX(drawingSnips{day}.is_ellipse&drawingSnips{day}.is_illusion,:);
+%         illusionY = drawingKin{day}.velY(drawingSnips{day}.is_ellipse&drawingSnips{day}.is_illusion,:);
+%         illusionSpeed = sqrt(illusionX.^2+illusionY.^2);
+%         illusionX = illusionX./illusionSpeed;
+%         illusionY = illusionY./illusionSpeed;
         
         circle = drawingRate{day}.(cnames{unit})(~drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
         ellipse = drawingRate{day}.(cnames{unit})(drawingSnips{day}.is_ellipse&~drawingSnips{day}.is_illusion,:);
@@ -39,64 +35,54 @@ for day=1:length(drawingRate)
         ellipse = detrend(ellipse);
         illusion = detrend(illusion);
         
-        kin = [circleX(:) circleY(:) circleDX(:) circleDY(:); ellipseX(:) ellipseY(:) ellipseDX(:) ellipseDY(:)];
-        kinModel = kin\[circle(:); ellipse(:)];
+%         circleModel = [circleX(:) circleY(:)]\circle(:);
+%         ellipseModel = [ellipseX(:) ellipseY(:)]\ellipse(:);
+%         
+%         motor = [illusionX(:) illusionY(:)]*circleModel;
+%         apparentX = illusionX.*1.8;
+%         apparentY = illusionY;
+%         apparentSpeed = sqrt(apparentX.^2+apparentY.^2);
+%         apparentX = apparentX ./ apparentSpeed;
+%         apparentY = apparentY ./ apparentSpeed;
+%         visual = [apparentX(:) apparentY(:)]*ellipseModel;
+%         motor = reshape(motor,numel(motor)/140,140);
+%         visual = reshape(visual,numel(visual)/140,140);
         
-        motor = [illusionX(:) illusionY(:) illusionDX(:) illusionDY(:)]*kinModel;
-        apparentX = illusionX.*(1+progress*.8);
-        apparentDX = apparentX ./ sqrt(apparentX.^2+illusionY.^2);
-        apparentDY = illusionY ./ sqrt(apparentX.^2+illusionY.^2);
-        visual = [apparentX(:) illusionY(:) apparentDX(:) apparentDY(:)]*kinModel;
+        visual = repmat(mean(ellipse),size(illusion,1),1);
+        motor = repmat(mean(circle),size(illusion,1),1);
+        disparity = (motor-visual).*progress;
         
-        [b,bint] = regress(illusion(:),[ones(size(motor)) motor visual-motor]);
-        prediction = [ones(size(motor)) motor visual-motor]*b;
+        X = [ones(numel(illusion),1) visual(:) disparity(:)];
+        y = illusion(:);
+        [b,bint] = regress(y,X);
         bint = bint(3,:)./bint(2,:);
-        uncertainty(end+1) = diff(bint);
+        separation(end+1) = sum(abs(mean(ellipse)-mean(circle)));
+%         uncertainty(end+1) = diff(bint);
         model(end+1) = b(3)/b(2);
         
-        if(range(mean(circle))>10)%uncertainty(end)<0.3369 && all(bint<-.1))
-            motor = reshape(motor,numel(motor)/140,140);
-            visual = reshape(visual,numel(visual)/140,140);
+        if(separation(end)>68.3)
+            prediction = X*b;
             prediction = reshape(prediction,numel(prediction)/140,140);
-            circle_ = [circleX(:) circleY(:) circleDX(:) circleDY(:)]*kinModel;
-            circle_ = reshape(circle_,size(circle));
-            ellipse_ = [ellipseX(:) ellipseY(:) ellipseDX(:) ellipseDY(:)]*kinModel;
-            ellipse_ = reshape(ellipse_,size(ellipse));
-            clf
-            subplot(3,1,1)
-            plot([mean(circle); mean(circle_)]');
-            subplot(3,1,2)
-            plot([mean(ellipse); mean(ellipse_)]');
-            subplot(3,1,3)
-            plot([mean(illusion); mean(motor); mean(visual)]');
-%             showAllDrawingPlots(struct('a',[mean(circle); zeros(1,size(circle,2)); mean(ellipse); mean(illusion)]));
+%             circle_ = [circleX(:) circleY(:)]*circleModel;
+%             circle_ = reshape(circle_,size(circle));
+%             ellipse_ = [ellipseX(:) ellipseY(:)]*ellipseModel;
+%             ellipse_ = reshape(ellipse_,size(ellipse));
+%             clf
+%             subplot(3,1,1)
+%             plot([mean(circle); mean(circle_)]');
+%             subplot(3,1,2)
+%             plot([mean(ellipse); mean(ellipse_)]');
+%             subplot(3,1,3)
+%             plot([mean(illusion); mean(motor)*b(2); mean(visual)*b(2)]');
+% %             showAllDrawingPlots(struct('a',[mean(circle); zeros(1,size(circle,2)); mean(ellipse); mean(illusion)]));
+            clf, hold on
+            plot([mean(circle); mean(ellipse); mean(illusion)]','LineWidth',2);
+            plot(mean(prediction),'r:','LineWidth',2);
+            title(separation(end));
             keyboard;
         end
     end
 end
- 
-edges = -1:.20:2;
-edgeCenters = (edges(1:end-1)+edges(2:end))/2;
-ant = histc(model(uncertainty < quantile(uncertainty, .25) & channel<100),edges);
-post = histc(model(uncertainty < quantile(uncertainty, .25) & channel>100),edges);
-subplot(2,1,1);
-bar(edgeCenters,ant(1:end-1),'FaceColor',[0 0 0]);
-set(gca,'XTick',[0 1]);
-set(gca,'XTickLabel',{'Actual', 'Visual'});
-ylabel('# Cells');
-title('Anterior array');
-axis tight
-box off
-subplot(2,1,2);
-bar(edgeCenters,post(1:end-1),'FaceColor',[0 0 0]);
-set(gca,'XTick',[0 1]);
-set(gca,'XTickLabel',{'Actual', 'Visual'});
-ylabel('# Cells');
-title('Posterior array');
-axis tight
-box off
-
-set(gcf,'PaperPosition',[0 0 3.35 3.35]/2)
 end
 
 function circle = detrend(circle)
