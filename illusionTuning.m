@@ -54,18 +54,24 @@ for day=1:length(drawingRate)
         uncertainty(end+1) = diff(bint);
         model(end+1) = b(3)/b(2);
         
-%         if(range(mean(circle))>10)%uncertainty(end)<0.3369 && all(bint<-.1))
-%             motor = reshape(motor,numel(motor)/140,140);
-%             visual = reshape(visual,numel(visual)/140,140);
-%             prediction = reshape(prediction,numel(prediction)/140,140);
-%             clf
-%             subplot(2,1,1)
-%             plot([mean(circle); mean(ellipse); mean(illusion)]');
-%             subplot(2,1,2)
-%             plot([mean(motor); mean(visual); mean(prediction)]');
-% %             showAllDrawingPlots(struct('a',[mean(circle); zeros(1,size(circle,2)); mean(ellipse); mean(illusion)]));
-%             keyboard;
-%         end
+        if(range(mean(circle))>10)%uncertainty(end)<0.3369 && all(bint<-.1))
+            motor = reshape(motor,numel(motor)/140,140);
+            visual = reshape(visual,numel(visual)/140,140);
+            prediction = reshape(prediction,numel(prediction)/140,140);
+            circle_ = [circleX(:) circleY(:) circleDX(:) circleDY(:)]*kinModel;
+            circle_ = reshape(circle_,size(circle));
+            ellipse_ = [ellipseX(:) ellipseY(:) ellipseDX(:) ellipseDY(:)]*kinModel;
+            ellipse_ = reshape(ellipse_,size(ellipse));
+            clf
+            subplot(3,1,1)
+            plot([mean(circle); mean(circle_)]');
+            subplot(3,1,2)
+            plot([mean(ellipse); mean(ellipse_)]');
+            subplot(3,1,3)
+            plot([mean(illusion); mean(motor); mean(visual)]');
+%             showAllDrawingPlots(struct('a',[mean(circle); zeros(1,size(circle,2)); mean(ellipse); mean(illusion)]));
+            keyboard;
+        end
     end
 end
  
