@@ -38,7 +38,11 @@ tSig = tSig<sigLevel | tSig>1-sigLevel;
 
 subplot(6,1,3:4), hold on
 for iit=find(outward)'
-    plot(az(iit),el(iit),'o','MarkerSize',tHist(iit),'MarkerFaceColor',[.5 .5 .5]-tSig(iit)*.5,'MarkerEdgeColor','none');
+    if(tHist(iit)==0)
+        plot(az(iit),el(iit),'x','MarkerSize',.1,'MarkerFaceColor',[.5 .5 .5]-tSig(iit)*.5,'MarkerEdgeColor','none');
+    else
+        plot(az(iit),el(iit),'o','MarkerSize',tHist(iit),'MarkerFaceColor',[.5 .5 .5]-tSig(iit)*.5,'MarkerEdgeColor','none');
+    end
 end
 set(gca,'XTick',[-pi/2 0 pi/2 pi]);
 set(gca,'XTickLabel',{'Left','Towards','Right','Away'});
@@ -51,7 +55,11 @@ title('Center-out');
 
 subplot(6,1,5:6), hold on
 for iit=find(~outward)'
-    plot(az(iit),el(iit),'o','MarkerSize',tHist(iit),'MarkerFaceColor',[.5 .5 .5]-tSig(iit)*.5,'MarkerEdgeColor','none');
+    if(tHist(iit)==0)
+        plot(az(iit),el(iit),'x','MarkerSize',.1,'MarkerFaceColor',[.5 .5 .5]-tSig(iit)*.5,'MarkerEdgeColor','none');
+    else
+        plot(az(iit),el(iit),'o','MarkerSize',tHist(iit),'MarkerFaceColor',[.5 .5 .5]-tSig(iit)*.5,'MarkerEdgeColor','none');
+    end
 end
 set(gca,'XTick',[-pi/2 0 pi/2 pi]);
 set(gca,'XTickLabel',{'Left','Towards','Right','Away'});

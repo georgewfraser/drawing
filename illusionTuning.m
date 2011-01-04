@@ -39,7 +39,8 @@ for day=1:length(drawingRate)
         ellipse = detrend(ellipse);
         illusion = detrend(illusion);
         
-        kinModel = [circleX(:) circleY(:) circleDX(:) circleDY(:); ellipseX(:) ellipseY(:) ellipseDX(:) ellipseDY(:)]\[circle(:); ellipse(:)];
+        kin = [circleX(:) circleY(:) circleDX(:) circleDY(:); ellipseX(:) ellipseY(:) ellipseDX(:) ellipseDY(:)];
+        kinModel = kin\[circle(:); ellipse(:)];
         
         motor = [illusionX(:) illusionY(:) illusionDX(:) illusionDY(:)]*kinModel;
         apparentX = illusionX.*(1+progress*.8);
@@ -47,40 +48,35 @@ for day=1:length(drawingRate)
         apparentDY = illusionY ./ sqrt(apparentX.^2+illusionY.^2);
         visual = [apparentX(:) illusionY(:) apparentDX(:) apparentDY(:)]*kinModel;
         
-%         circle = reshape(circle,size(illusion));
-%         ellipse = reshape(ellipse,size(illusion));
-        
-        y = illusion(:)-visual;
-        x = (motor-visual);
-        x = reshape(x,numel(x)/140,140);
-        y = reshape(y,numel(y)/140,140);
-        visual = reshape(visual,numel(visual)/140,140);
-        motor = reshape(motor,numel(motor)/140,140);
-        [b,bint] = regress(y(:),x(:));
-        prediction = mean(visual)+b*mean(x);
+        [b,bint] = regress(illusion(:),[ones(size(motor)) motor visual-motor]);
+        prediction = [ones(size(motor)) motor visual-motor]*b;
+        bint = bint(3,:)./bint(2,:);
         uncertainty(end+1) = diff(bint);
-        model(end+1) = b;
+        model(end+1) = b(3)/b(2);
         
-%         if(range(mean(circle))>10)
+%         if(range(mean(circle))>10)%uncertainty(end)<0.3369 && all(bint<-.1))
+%             motor = reshape(motor,numel(motor)/140,140);
+%             visual = reshape(visual,numel(visual)/140,140);
+%             prediction = reshape(prediction,numel(prediction)/140,140);
 %             clf
-%             subplot(2,1,1);
+%             subplot(2,1,1)
 %             plot([mean(circle); mean(ellipse); mean(illusion)]');
-%             subplot(2,1,2);
-%             plot([mean(motor); mean(visual); prediction]');
+%             subplot(2,1,2)
+%             plot([mean(motor); mean(visual); mean(prediction)]');
 % %             showAllDrawingPlots(struct('a',[mean(circle); zeros(1,size(circle,2)); mean(ellipse); mean(illusion)]));
 %             keyboard;
 %         end
     end
 end
  
-edges = -1:.10:2;
+edges = -1:.20:2;
 edgeCenters = (edges(1:end-1)+edges(2:end))/2;
 ant = histc(model(uncertainty < quantile(uncertainty, .25) & channel<100),edges);
 post = histc(model(uncertainty < quantile(uncertainty, .25) & channel>100),edges);
 subplot(2,1,1);
 bar(edgeCenters,ant(1:end-1),'FaceColor',[0 0 0]);
 set(gca,'XTick',[0 1]);
-set(gca,'XTickLabel',{'Visual', 'Motor'});
+set(gca,'XTickLabel',{'Actual', 'Visual'});
 ylabel('# Cells');
 title('Anterior array');
 axis tight
@@ -88,7 +84,7 @@ box off
 subplot(2,1,2);
 bar(edgeCenters,post(1:end-1),'FaceColor',[0 0 0]);
 set(gca,'XTick',[0 1]);
-set(gca,'XTickLabel',{'Visual', 'Motor'});
+set(gca,'XTickLabel',{'Actual', 'Visual'});
 ylabel('# Cells');
 title('Posterior array');
 axis tight
