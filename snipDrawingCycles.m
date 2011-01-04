@@ -13,6 +13,7 @@ for day=1:length(drawingByDate)
     cycles.is_illusion = false(nTotal,1);
     cycles.is_ccw = false(nTotal,1);
     cycles.progress = nan(nTotal, nPoints*7);
+    cycles.trial = (1:nTotal)';
 
     trials = drawing.trials;
 
