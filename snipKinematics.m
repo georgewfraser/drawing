@@ -47,5 +47,13 @@ for day=1:length(snipsByDate)
         kinematics.curvature(iis,:) = interpolate(curvTime, curv, snips.time(iis,:));
     end
     kinematicsByDate{day} = kinematics;
+    
+%     clf, hold on
+%     plot(snips.time(1,:),kinematics.velX(1,:))
+%     start = snips.time(1,1);
+%     finish = snips.time(1,end);
+%     sel = start<velTime&velTime<finish;
+%     plot(velTime(sel),vel(sel,1),'r');
+%     keyboard;
 end
 end

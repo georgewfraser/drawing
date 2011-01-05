@@ -1,10 +1,10 @@
-function [disparity, posErr] = illusionCovariates(drawingSnips, drawingKin, drawingKinMean)
+function [disparity, correction] = illusionCovariates(drawingSnips, drawingKin, drawingKinMean)
 disparity = cell(size(drawingSnips));
-posErr = cell(size(drawingSnips));
+correction = cell(size(drawingSnips));
 
 for day=1:length(drawingSnips)
     disparity{day} = struct('x',nan(size(drawingSnips{day}.time)));
-    posErr{day} = struct('x',nan(size(drawingSnips{day}.time)));
+    correction{day} = struct('x',nan(size(drawingSnips{day}.time)));
     
     illusion = drawingSnips{day}.progress;
     illusion = (illusion-2)/2;
@@ -15,40 +15,79 @@ for day=1:length(drawingSnips)
     disparity{day}.x = illusion.*.8.*drawingKin{day}.posX;
     
     % Convert to visual coordinates
-    posX = drawingKin{day}.posX .* (1+illusion.*.8);
-    posY = drawingKin{day}.posY;
+    cursorPosX = drawingKin{day}.posX .* (1+illusion.*.8);
+    cursorPosY = drawingKin{day}.posY;
+    cursorVelX = drawingKin{day}.velX;
+    cursorVelY = drawingKin{day}.velY;
     
-    ellipseX = drawingKinMean{day}.posX(3,:);
-    ellipseY = drawingKinMean{day}.posY(3,:);
-    ellipseX = resample(ellipseX,10,1);
-    ellipseY = resample(ellipseY,10,1);
-    ellipseX = ellipseX(210:1200);
-    ellipseY = ellipseY(210:1200);
+    ellipsePosX = drawingKinMean{day}.posX(3,:);
+    ellipsePosY = drawingKinMean{day}.posY(3,:);
+    ellipsePosX = resample(ellipsePosX,10,1);
+    ellipsePosY = resample(ellipsePosY,10,1);
+    ellipsePosX = ellipsePosX(210:1200);
+    ellipsePosY = ellipsePosY(210:1200);
     
-    circleX = drawingKinMean{day}.posX(1,:);
-    circleY = drawingKinMean{day}.posY(1,:);
-    circleX = resample(circleX,10,1);
-    circleY = resample(circleY,10,1);
-    circleX = circleX(210:1200);
-    circleY = circleY(210:1200);
+    ellipseVelX = drawingKinMean{day}.velX(3,:);
+    ellipseVelY = drawingKinMean{day}.velY(3,:);
+    ellipseVelX = resample(ellipseVelX,10,1);
+    ellipseVelY = resample(ellipseVelY,10,1);
+    ellipseVelX = ellipseVelX(210:1200);
+    ellipseVelY = ellipseVelY(210:1200);
     
-    figure = [ellipseX' ellipseY'];
-    cursorX = posX(drawingSnips{day}.is_ellipse,:);
-    cursorY = posY(drawingSnips{day}.is_ellipse,:);
+    circlePosX = drawingKinMean{day}.posX(1,:);
+    circlePosY = drawingKinMean{day}.posY(1,:);
+    circlePosX = resample(circlePosX,10,1);
+    circlePosY = resample(circlePosY,10,1);
+    circlePosX = circlePosX(210:1200);
+    circlePosY = circlePosY(210:1200);
+    
+    circleVelX = drawingKinMean{day}.velX(1,:);
+    circleVelY = drawingKinMean{day}.velY(1,:);
+    circleVelX = resample(circleVelX,10,1);
+    circleVelY = resample(circleVelY,10,1);
+    circleVelX = circleVelX(210:1200);
+    circleVelY = circleVelY(210:1200);
+    
+    % Compute the figure and cursor position
+    figure = [ellipsePosX' ellipsePosY'];
+    cursorX = cursorPosX(drawingSnips{day}.is_ellipse,:);
+    cursorY = cursorPosY(drawingSnips{day}.is_ellipse,:);
     cursor = [cursorX(:) cursorY(:)];
-    [cp,dist] = kdtree(figure,cursor);
-    err = dist.*sign(cursorX(:));
-    err = reshape(err,size(cursorX));
-    posErr{day}.x(drawingSnips{day}.is_ellipse,:) = err;
+    % Identify where we are in the figure
+    idx = kdtreeidx(figure,cursor);
+    % Identify what the velocity should be
+    idealVelX = reshape(ellipseVelX(idx),size(cursorX));
+    idealVelY = reshape(ellipseVelY(idx),size(cursorX));
+    actualVelX = cursorVelX(drawingSnips{day}.is_ellipse,:);
+    actualVelY = cursorVelY(drawingSnips{day}.is_ellipse,:);
+    % Compute the angle
+    angle = atan2(actualVelY,actualVelX)-atan2(idealVelY,idealVelX);
+    angle = wrapToPi(angle);
+    correction{day}.x(drawingSnips{day}.is_ellipse,:) = angle;
     
-    figure = [circleX' circleY'];
-    cursorX = posX(~drawingSnips{day}.is_ellipse,:);
-    cursorY = posY(~drawingSnips{day}.is_ellipse,:);
+%     idx = find(drawingSnips{day}.is_illusion(drawingSnips{day}.is_ellipse),1);
+%     clf, hold on
+%     plot(cursorX(idx,:),cursorY(idx,:),':');
+%     quiver(cursorX(idx,:),cursorY(idx,:),actualVelX(idx,:),actualVelY(idx,:),'Color',[0 0 1]);
+%     quiver(cursorX(idx,:),cursorY(idx,:),idealVelX(idx,:),idealVelY(idx,:),'Color',[1 0 0]);
+%     keyboard;
+    
+    % Compute the figure and cursor position
+    figure = [circlePosX' circlePosY'];
+    cursorX = cursorPosX(~drawingSnips{day}.is_ellipse,:);
+    cursorY = cursorPosY(~drawingSnips{day}.is_ellipse,:);
     cursor = [cursorX(:) cursorY(:)];
-    [cp,dist] = kdtree(figure,cursor);
-    err = dist.*sign(cursorX(:));
-    err = reshape(err,size(cursorX));
-    posErr{day}.x(~drawingSnips{day}.is_ellipse,:) = err;
+    % Identify where we are in the figure
+    idx = kdtreeidx(figure,cursor);
+    % Identify what the velocity should be
+    idealVelX = reshape(circleVelX(idx),size(cursorX));
+    idealVelY = reshape(circleVelY(idx),size(cursorX));
+    actualVelX = cursorVelX(~drawingSnips{day}.is_ellipse,:);
+    actualVelY = cursorVelY(~drawingSnips{day}.is_ellipse,:);
+    % Compute the angle
+    angle = atan2(actualVelY,actualVelX)-atan2(idealVelY,idealVelX);
+    angle = wrapToPi(angle);
+    correction{day}.x(~drawingSnips{day}.is_ellipse,:) = angle;
 end
         
         
