@@ -1,30 +1,47 @@
 function [infoEnd, infoDir, coinfo] = directionalInfo(snips, factors)
-infoEnd = nan(20,size(factors,2));
-infoDir = nan(20,size(factors,2));
-coinfo = nan(20,size(factors,2));
+infoEnd = nan(20,1);
+infoDir = nan(20,1);
+coinfo = nan(20,1);
 
-for nFactors=1:size(factors,2)
-    [direction, endpoint, both] = subtractMeanByTarget3D(snips, factors(:,nFactors));
+for t=1:20
+    HA = 0;
+    HA_D = 0;
+    HA_E = 0;
+    HA_DE = 0;
+    for day=1:length(factors)
+        fnames = fieldnames(factors{day});
+        A = nan(size(factors{day}.(fnames{1}),1),length(fnames));
+        for unit=1:length(fnames)
+            A(:,unit) = factors{day}.(fnames{unit})(:,t);
+        end
+        HA = HA + entropy(A,ones(size(A,1),1));
+        HA_D = HA_D + entropy(A,snips{day}.targetPos-snips{day}.startPos);
+        HA_E = HA_E + entropy(A,snips{day}.targetPos);
+        HA_DE = HA_DE + entropy(A,[snips{day}.startPos snips{day}.targetPos]);
+    end
+    HA = HA/length(factors);
+    HA_D = HA_D/length(factors);
+    HA_E = HA_E/length(factors);
+    HA_DE = HA_DE/length(factors);
     
-    for t=1:20
-        HA = sum(cellfun(@(x) dayEntropy(x,t), factors(:,nFactors)));
-        HA_D = sum(cellfun(@(x) dayEntropy(x,t), direction));
-        HA_E = sum(cellfun(@(x) dayEntropy(x,t), endpoint));
-        HA_DE = sum(cellfun(@(x) dayEntropy(x,t), both));
-        
-        % I(A;E|D)
-        infoEnd(t,nFactors) = HA_D-HA_DE;
-        % I(A;D|E)
-        infoDir(t,nFactors) = HA_E-HA_DE;
-        % I(A;E;D) = I(A;E|D)-I(A;E)
-        coinfo(t,nFactors) = infoEnd(t,nFactors)-(HA-HA_E);%HA+HA_both-HA_targ-HA_start;
+    % I(A;E|D)
+    infoEnd(t) = HA_D-HA_DE;
+    % I(A;D|E)
+    infoDir(t) = HA_E-HA_DE;
+    % I(A;E;D) = I(A;E|D)-I(A;E)
+    coinfo(t) = infoEnd(t)-(HA-HA_E);%HA+HA_both-HA_targ-HA_start;
+end
+end
+
+function H = entropy(A,X)
+uniqueX = unique(X,'rows');
+[tf, loc] = ismember(X,uniqueX,'rows');
+H = 0;
+for i=1:size(uniqueX,1)
+    H = H + 0.5*log2((2*pi*exp(1))^size(A,2)*prod(var(A(i==loc,:))))*mean(i==loc);
+    if(~isreal(H))
+        keyboard;
     end
 end
-end
-
-function entropy = dayEntropy(day,t)
-day = struct2cell(structfun(@(X) X(:,t), day, 'UniformOutput', false));
-day = cell2mat(reshape(day,1,numel(day)));
-day = day(sum(isnan(day),2)==0,:);
-entropy = 0.5*log2((2*pi*exp(1))^size(day,2)*det(cov(day)));
+H = H / size(A,1);
 end
