@@ -23,10 +23,8 @@ end
 end
 
 function entropy = dayEntropy(day,t)
-fnames = fieldnames(day);
-day = day.(fnames{end})(:,t);
-% day = struct2cell(structfun(@(X) X(:,t), day, 'UniformOutput', false));
-% day = cell2mat(reshape(day,1,numel(day)));
+day = struct2cell(structfun(@(X) X(:,t), day, 'UniformOutput', false));
+day = cell2mat(reshape(day,1,numel(day)));
 day = day(sum(isnan(day),2)==0,:);
 entropy = 0.5*log2((2*pi*exp(1))^size(day,2)*det(cov(day)));
 end
