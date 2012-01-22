@@ -1,11 +1,2 @@
-*.asv
-*.mex*
-*.png
-*.pdf
 *.ps
-*.eps
-*.mat
-*.wmv
-*.fig
-*.ai
-*.log
+*.asv

@@ -1,7 +1,7 @@
 function [canA, canB, canR, canLag, fold] = drawingCanonical(drawingSnips, drawingKin, drawing)
 warning('off','stats:canoncorr:NotFullRank');
 nTrials = cellfun(@(x) size(x.time,1), drawingSnips);
-fold = arrayfun(@(x) crossvalind('Kfold',x,5), nTrials, 'UniformOutput', false);
+fold = arrayfun(@fiveFoldCrossValidation, nTrials, 'UniformOutput', false);
 
 basis = drawingBasis(drawingSnips, drawingKin);
 canLag = cell(length(basis),5);
@@ -81,7 +81,12 @@ for k=1:5
 end
 warning('on','stats:canoncorr:NotFullRank');
 end
-            
+
+% Screw you, mathworks, for putting crossvalind in a toolbox
+function idx = fiveFoldCrossValidation(n)
+    idx = randperm(n)';
+    idx = ceil(idx*5/n);
+end
 
 function [X,Y] = trainingData(drawingSnips, drawingRate, basis, day, fold, k)
     sel = drawingSnips{day}.is_ellipse | ~drawingSnips{day}.is_illusion;
