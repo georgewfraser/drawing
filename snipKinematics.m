@@ -1,4 +1,4 @@
-function kinematicsByDate = snipKinematics(snipsByDate, dataByDate)
+function kinematicsByDate = snipKinematics(snipsByDate, dataByDate, lag)
 kinematicsByDate = cell(size(snipsByDate));
 for day=1:length(snipsByDate)
     data = dataByDate{day};
@@ -31,20 +31,20 @@ for day=1:length(snipsByDate)
     curv = sqrt(sum(cross(velForCurv,accForCurv,2).^2,2))./speedForCurv;
 
     for iis=1:size(snips.time,1)
-        kinematics.posX(iis,:) = interpolate(posTime, pos(:,1), snips.time(iis,:));
-        kinematics.posY(iis,:) = interpolate(posTime, pos(:,2), snips.time(iis,:));
-        kinematics.posZ(iis,:) = interpolate(posTime, pos(:,3), snips.time(iis,:));
+        kinematics.posX(iis,:) = interpolate(posTime, pos(:,1), snips.time(iis,:)-lag);
+        kinematics.posY(iis,:) = interpolate(posTime, pos(:,2), snips.time(iis,:)-lag);
+        kinematics.posZ(iis,:) = interpolate(posTime, pos(:,3), snips.time(iis,:)-lag);
 
-        kinematics.velX(iis,:) = interpolate(velTime, vel(:,1), snips.time(iis,:));
-        kinematics.velY(iis,:) = interpolate(velTime, vel(:,2), snips.time(iis,:));
-        kinematics.velZ(iis,:) = interpolate(velTime, vel(:,3), snips.time(iis,:));
+        kinematics.velX(iis,:) = interpolate(velTime, vel(:,1), snips.time(iis,:)-lag);
+        kinematics.velY(iis,:) = interpolate(velTime, vel(:,2), snips.time(iis,:)-lag);
+        kinematics.velZ(iis,:) = interpolate(velTime, vel(:,3), snips.time(iis,:)-lag);
 
-        kinematics.accX(iis,:) = interpolate(accTime, acc(:,1), snips.time(iis,:));
-        kinematics.accY(iis,:) = interpolate(accTime, acc(:,2), snips.time(iis,:));
-        kinematics.accZ(iis,:) = interpolate(accTime, acc(:,3), snips.time(iis,:));
+        kinematics.accX(iis,:) = interpolate(accTime, acc(:,1), snips.time(iis,:)-lag);
+        kinematics.accY(iis,:) = interpolate(accTime, acc(:,2), snips.time(iis,:)-lag);
+        kinematics.accZ(iis,:) = interpolate(accTime, acc(:,3), snips.time(iis,:)-lag);
 
-        kinematics.speed(iis,:) = interpolate(curvTime, speedForCurv, snips.time(iis,:));
-        kinematics.curvature(iis,:) = interpolate(curvTime, curv, snips.time(iis,:));
+        kinematics.speed(iis,:) = interpolate(curvTime, speedForCurv, snips.time(iis,:)-lag);
+        kinematics.curvature(iis,:) = interpolate(curvTime, curv, snips.time(iis,:)-lag);
     end
     kinematicsByDate{day} = kinematics;
     

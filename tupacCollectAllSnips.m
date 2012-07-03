@@ -1,15 +1,15 @@
-dataRoot = 'B:/Data/Tupac';
+dataRoot = 'E:/Grad/Data/Tupac';
 
-load B:\Data\Tupac\dates.mat
+load tupac-dates.mat
 centerOut = loadCenterOut(dataRoot, dates);
 drawing = loadDrawing(dataRoot, dates);
 
 coutSnips = snipPeak(centerOut);
 coutRate = snipSmoothedRate(coutSnips, centerOut, .4, 0);
-coutKin = snipKinematics(coutSnips, centerOut);
+coutKin = snipKinematics(coutSnips, centerOut, 0);
 drawingSnips = snipDrawingCycles(drawing);
 drawingRate = snipSmoothedRate(drawingSnips, drawing, .4, 0);
-drawingKin = snipKinematics(drawingSnips, drawing);
+drawingKin = snipKinematics(drawingSnips, drawing, 0);
 
 drawing = prune(drawing, drawingSnips, .5);
 centerOut = prune(centerOut, coutSnips, .5);
@@ -22,3 +22,5 @@ coutSnipsMean = meanByTarget3D(coutSnips, coutSnips);
 drawingSnipsMean = meanByDrawing(drawingSnips, drawingSnips);
 
 [coutRate, coutRateMean, drawingRate, drawingRateMean] = synchFields(coutRate, coutRateMean, drawingRate, drawingRateMean);
+
+loadLags;
